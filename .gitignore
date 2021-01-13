@@ -444,3 +444,4 @@ passwd.txt
 *.7z
 *.zip
 logs/*
+.vscode/
