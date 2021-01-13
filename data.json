@@ -1,0 +1,12 @@
+{
+    "classroomLink": "https://classroom.google.com/c/MjEwMzIwNDY5MjYz",
+    "remoteURI": "http://127.0.0.1:4444",
+    "driverFolder": "drivers",
+    "logFolder": "logs",
+    "delays": {
+        "login": {
+            "afterUsername": 1000,
+            "afterLogin": 600
+        }
+    }
+}
