@@ -33,7 +33,7 @@ namespace GoogleCRBot
             wait.Until(driver => driver.Navigate()).GoToUrl(url);
             IWebElement el = wait.Until(driver => driver.FindElement(By.XPath("//*[@id=\":1.t\"]")));
             el.SendKeys(message);
-            // el.SendKeys(Keys.Tab + Keys.Enter);
+            el.SendKeys(Keys.Tab + Keys.Enter);
         }
         public bool Login()
         {
