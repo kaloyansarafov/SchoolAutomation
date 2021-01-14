@@ -445,3 +445,4 @@ passwd.txt
 *.zip
 logs/*
 .vscode/
+data.json
