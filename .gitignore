@@ -444,4 +444,5 @@ $RECYCLE.BIN/
 *.zip
 .vscode/
 drivers/*
+!drivers/.git*
 config.json
