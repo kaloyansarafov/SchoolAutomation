@@ -17,23 +17,32 @@ namespace GoogleCRBot
     public class ClassroomBot : IDisposable
     {
         BrowserData browserData { get; }
-        GlobalData globalData { get; }
+        internal GlobalData globalData { get; }
         IWebDriver driver { get; }
         WebDriverWait wait { get; }
+        const string CONFIG = "config.json";
+        const string FIRST_EL_XPATH = "//*[@id=\":1.t\"]";
         public ClassroomBot()
         {
-            globalData = JsonConvert.DeserializeObject<GlobalData>(File.ReadAllText("data.json"));
-            driver = BrowserFactory.InitDriver(globalData.DriverFolder, globalData.PreferredBrowser);
-            browserData = BrowserFactory.GetBrowserData(globalData);
+            globalData = JsonConvert.DeserializeObject<GlobalData>(File.ReadAllText(CONFIG));
+            driver = DriverFactory.InitDriver(globalData.DriverFolder, globalData.PreferredBrowser);
+            browserData = DriverFactory.GetBrowserData(globalData);
             wait = new WebDriverWait(driver, new TimeSpan(0, 0, 5));
         }
 
-        public void SendOnFirst(string message, string url)
+        public void SendOnFirst(string message)
         {
-            wait.Until(driver => driver.Navigate()).GoToUrl(url);
-            IWebElement el = wait.Until(driver => driver.FindElement(By.XPath("//*[@id=\":1.t\"]")));
+            wait.Until(driver => driver.Navigate()).GoToUrl(globalData.ClassroomLink);
+            IWebElement el = wait.Until(driver => driver.FindElement(By.XPath(FIRST_EL_XPATH)));
             el.SendKeys(message);
             el.SendKeys(Keys.Tab + Keys.Enter);
+        }
+        // Test method
+        internal void WriteOnFirst(string message)
+        {
+            wait.Until(driver => driver.Navigate()).GoToUrl(globalData.ClassroomLink);
+            IWebElement el = wait.Until(driver => driver.FindElement(By.XPath(FIRST_EL_XPATH)));
+            el.SendKeys(message);
         }
         public bool Login()
         {
@@ -50,9 +59,10 @@ namespace GoogleCRBot
             return true;
         }
 
+        // Google default login screen
         private async Task LoginTroughUser()
         {
-            (string username, string password) = GetCreds();
+            (string username, string password) = globalData.User;
 
             // send username
             wait.Until(driver =>
@@ -74,12 +84,6 @@ namespace GoogleCRBot
         {
             Console.WriteLine("Delaying for " + ms);
             await Task.Delay(ms);
-        }
-
-        (string, string) GetCreds()
-        {
-            IEnumerable<string> passwd = File.ReadLines("passwd.txt");
-            return (passwd.ElementAt(0), passwd.ElementAt(1));
         }
 
         public void Dispose()

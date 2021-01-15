@@ -1,0 +1,25 @@
+{
+    "classroomLink": "https://classroom.google.com/c/<id_of_classroom>",
+    "driverFolder": "drivers",
+    "user": {
+        "username": "<google_username>",
+        "password": "<google_password>"
+    },
+    "preferredBrowser": "firefox",
+    "chrome": {
+        "delays": {
+            "login": {
+                "afterUsername": 1,
+                "afterLogin": 3
+            }
+        }
+    },
+    "firefox": {
+        "delays": {
+            "login": {
+                "afterUsername": 1,
+                "afterLogin": 0.6
+            }
+        }
+    }
+}
