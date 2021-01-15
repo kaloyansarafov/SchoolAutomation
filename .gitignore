@@ -440,9 +440,8 @@ $RECYCLE.BIN/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-passwd.txt
 *.7z
 *.zip
-logs/*
 .vscode/
-data.json
+drivers/*
+config.json
