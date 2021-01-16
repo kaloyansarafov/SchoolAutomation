@@ -6,12 +6,12 @@ using OpenQA.Selenium.Remote;
 
 namespace GoogleCRBot
 {
-    public static class DriverFactory
+    internal static class DriverFactory
     {
         const string defaultURI = "http://127.0.0.1";
-        public static IWebDriver InitDriver(string driverFolder, string browser)
+        internal static IWebDriver InitDriver(string driverFolder, string browser)
         {
-            IWebDriver driver;
+            DriverWithExe driver = new DriverWithExe();
             DriverOptions options = getBrowserOptions(browser);
             string driverName = getDriverName(browser);
 
@@ -20,7 +20,7 @@ namespace GoogleCRBot
             try
             {
                 Console.WriteLine("Attaching webdriver");
-                driver = new RemoteWebDriver(new Uri(uri), options);
+                driver.Connect(new Uri(uri), options);
             }
             catch (OpenQA.Selenium.WebDriverException)
             {
@@ -31,20 +31,16 @@ namespace GoogleCRBot
                 {
                     driverFile += ".exe";
                 }
-                executeFile(driverFile);
+                driver.StartDriverExe(driverFile);
 
                 // Try to reatach
-                driver = new RemoteWebDriver(new Uri(uri), options);
+                driver.Connect(new Uri(uri), options);
             }
-            // catch (InvalidOperationException)
-            // {
-            // Could restart web driver
-            // }
             Console.WriteLine("Attached webdriver");
             return driver;
         }
 
-        public static Data.BrowserData GetBrowserData(Data.GlobalData global)
+        internal static Data.BrowserConfig GetBrowserData(Data.Config global)
         {
             switch (global.PreferredBrowser)
             {
@@ -54,21 +50,6 @@ namespace GoogleCRBot
                     return global.Chrome;
                 default:
                     throw new NotImplementedException("Not implemented for browser: " + global.PreferredBrowser);
-            }
-        }
-
-        private static void executeFile(string driverPath)
-        {
-            if (!File.Exists(driverPath))
-            {
-                throw new FileNotFoundException($"No such file: {driverPath}");
-            }
-            Process proc = new Process();
-            proc.StartInfo.FileName = driverPath;
-
-            if (!proc.Start())
-            {
-                throw new OperationCanceledException($"Couldn't start {driverPath}");
             }
         }
 
