@@ -2,17 +2,23 @@ namespace GoogleCRBot.Data
 {
     public class Config
     {
-        public string ClassroomLink { get; }
-        public UserConfig User { get; }
-        public string DriverFolder { get; set; } = "driver";
-        public string PreferredBrowser { get; set; } = "firefox";
+        public string ClassroomLink { get; set; }
+        public UserConfig User { get; set; }
+        public DriverConfig Driver { get; set; }
         public Config(string classroomLink, UserConfig user)
         {
             ClassroomLink = classroomLink;
             User = user;
+            Driver = new DriverConfig();
         }
     }
-    public record UserConfig
+    public class DriverConfig
+    {
+        public string DriverFolder { get; set; } = "drivers";
+        public string PreferredBrowser { get; set; } = "firefox";
+        public bool RunHeadless { get; set; } = false;
+    }
+    public class UserConfig
     {
         public string Username { get; set; }
         public string Password { get; set; }

@@ -14,7 +14,7 @@ namespace GoogleCRBot
         public ClassroomBot(Config config)
         {
             this.config = config;
-            driver = DriverFactory.InitDriver(config.DriverFolder, config.PreferredBrowser);
+            driver = DriverFactory.InitDriver(config.Driver);
             wait = new WebDriverWait(driver, new TimeSpan(0, 0, 5));
             selFetcher = new SelectorFetcher(driver);
         }

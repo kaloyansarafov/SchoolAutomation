@@ -1,4 +1,5 @@
 using System;
+using GoogleCRBot.Data;
 using OpenQA.Selenium;
 
 namespace GoogleCRBot
@@ -6,13 +7,13 @@ namespace GoogleCRBot
     internal static class DriverFactory
     {
         const string defaultURI = "http://127.0.0.1";
-        internal static IWebDriver InitDriver(string driverFolder, string browser)
+        internal static IWebDriver InitDriver(DriverConfig config)
         {
             DriverWithExe driver = new DriverWithExe();
-            DriverOptions options = getBrowserOptions(browser);
-            string driverName = getDriverName(browser);
+            DriverOptions options = getBrowserOptions(config.PreferredBrowser, config.RunHeadless);
+            string driverName = getDriverName(config.PreferredBrowser);
 
-            string uri = defaultURI + ":" + getDefaultPort(browser);
+            string uri = defaultURI + ":" + getDefaultPort(config.PreferredBrowser);
 
             try
             {
@@ -23,7 +24,7 @@ namespace GoogleCRBot
             {
                 Console.WriteLine("Starting webdriver");
 
-                string driverFile = $"{driverFolder}/{driverName}";
+                string driverFile = $"{config.DriverFolder}/{driverName}";
                 if (System.OperatingSystem.IsWindows())
                 {
                     driverFile += ".exe";
@@ -37,14 +38,22 @@ namespace GoogleCRBot
             return driver;
         }
 
-        private static DriverOptions getBrowserOptions(string browser)
+        private static DriverOptions getBrowserOptions(string browser, bool headless)
         {
             switch (browser)
             {
                 case "firefox":
-                    return new OpenQA.Selenium.Firefox.FirefoxOptions();
+                    var ffOpts = new OpenQA.Selenium.Firefox.FirefoxOptions();
+
+                    if (headless) ffOpts.AddArgument("--headless");
+
+                    return ffOpts;
                 case "chrome":
-                    return new OpenQA.Selenium.Chrome.ChromeOptions();
+                    var chromeOpts = new OpenQA.Selenium.Chrome.ChromeOptions();
+
+                    if (headless) chromeOpts.AddArgument("--headless");
+
+                    return chromeOpts;
                 default:
                     throw new NotImplementedException("Not implemented for browser: " + browser);
             }
