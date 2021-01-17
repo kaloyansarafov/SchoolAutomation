@@ -1,15 +1,10 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using OpenQA.Selenium;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using OpenQA.Selenium.Support.UI;
 using System;
-using OpenQA.Selenium.Remote;
-using OpenQA.Selenium.Firefox;
-using System.Diagnostics;
 using GoogleCRBot.Data;
 
 namespace GoogleCRBot
@@ -52,7 +47,7 @@ namespace GoogleCRBot
             return el;
         }
         /// <summary>
-        /// Gets the post at the index from the top of the posts in the classroom
+        /// Gets the post at the index starting from the top of the classroom
         /// </summary>
         /// <param name="index">Should be atleast zero</param>
         /// <returns></returns>

@@ -14,7 +14,8 @@ namespace Main
             bool loggedIn = await bot.Login();
             if (!loggedIn)
             {
-                throw new Exception("Failed to login");
+                Console.WriteLine("Failed to login");
+                return;
             }
             WriteTest(bot);
             PostTest(bot);
