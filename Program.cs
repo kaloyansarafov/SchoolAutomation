@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
 using GoogleCRBot;
 using GoogleCRBot.Data;
+using Newtonsoft.Json;
 
 namespace Main
 {
@@ -46,7 +47,8 @@ namespace Main
         static void Main()
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            using var bot = new ClassroomBot();
+            Config config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+            using var bot = new ClassroomBot(config);
             bot.Login();
             Console.WriteLine(bot.GetMessage(0));
             Console.WriteLine(bot.GetPostOverview(0));

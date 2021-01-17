@@ -1,8 +1,4 @@
-using System.Collections.Generic;
-using System.IO;
 using OpenQA.Selenium;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
 using OpenQA.Selenium.Support.UI;
 using System;
 using GoogleCRBot.Data;
@@ -13,17 +9,12 @@ namespace GoogleCRBot
     {
         internal Config config { get; }
         IWebDriver driver { get; }
-        // Timeout
         WebDriverWait wait { get; }
         SelectorFetcher selFetcher { get; }
-        const string CONFIG = "config.json";
-        public ClassroomBot()
+        public ClassroomBot(Config config)
         {
-            config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(CONFIG));
+            this.config = config;
             driver = DriverFactory.InitDriver(config.DriverFolder, config.PreferredBrowser);
-            // ITimeouts timeouts = driver.Manage().Timeouts();
-            // timeouts.PageLoad = new TimeSpan(0, 0, 2);
-            // timeouts.ImplicitWait = new TimeSpan(0, 0, 2);
             wait = new WebDriverWait(driver, new TimeSpan(0, 0, 5));
             selFetcher = new SelectorFetcher(driver);
         }
@@ -152,10 +143,6 @@ namespace GoogleCRBot
             });
             wait.Until(driver => passwordEl.Displayed);
             passwordEl.SendKeys(password + Keys.Enter);
-        }
-        private void WaitFor(float seconds)
-        {
-            Task.Delay((int)(seconds * 1000)).Wait();
         }
         public void Dispose()
         {
