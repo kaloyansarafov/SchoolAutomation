@@ -40,19 +40,6 @@ namespace GoogleCRBot
             return driver;
         }
 
-        internal static Data.BrowserConfig GetBrowserData(Data.Config global)
-        {
-            switch (global.PreferredBrowser)
-            {
-                case "firefox":
-                    return global.Firefox;
-                case "chrome":
-                    return global.Chrome;
-                default:
-                    throw new NotImplementedException("Not implemented for browser: " + global.PreferredBrowser);
-            }
-        }
-
         private static DriverOptions getBrowserOptions(string browser)
         {
             switch (browser)

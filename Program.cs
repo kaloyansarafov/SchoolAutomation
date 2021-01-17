@@ -1,37 +1,73 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using GoogleCRBot;
 using GoogleCRBot.Data;
 
 namespace Main
 {
-    class Program
+    class Tests
     {
-        static async Task Main()
+        ClassroomBot bot { get; }
+        public Tests(ClassroomBot bot)
         {
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
-            using ClassroomBot bot = new ClassroomBot();
-            bool loggedIn = await bot.Login();
-            if (!loggedIn)
-            {
-                Console.WriteLine("Failed to login");
-                return;
-            }
-            WriteTest(bot);
-            PostTest(bot);
-            Console.ReadLine();
+            this.bot = bot;
         }
-        static void WriteTest(ClassroomBot bot)
+        public void WriteOnMessage()
         {
             Console.WriteLine("Writing message");
-            bot.WriteOnPost("Добър ден", 1);
+            bot.WriteOnMessage("Добър ден", 1);
         }
-        static void PostTest(ClassroomBot bot)
+        public void WriteOnPost()
         {
-            Post post = bot.GetPost(1);
-            Console.WriteLine(post.Name);
+            bot.GoToPost(0);
+            bot.WriteOnCurrentPost("Добре");
+            Console.WriteLine("Press enter to go back...");
+            Console.ReadLine();
+            bot.GoHome();
+        }
+        public void FetchPostOverview()
+        {
+            Post item = bot.GetPostOverview(0);
+            Console.WriteLine(item.Teacher);
+            Console.WriteLine(item.Timestamp);
+            Console.WriteLine(item.Name);
+        }
+        public void FetchMessage()
+        {
+            Message post = bot.GetMessage(0);
+            Console.WriteLine(post.Teacher);
             Console.WriteLine(post.Timestamp);
-            Console.WriteLine(post.Message);
+            Console.WriteLine(post.Information);
+        }
+    }
+    class Program
+    {
+        static void Main()
+        {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            using var bot = new ClassroomBot();
+            bot.Login();
+            Console.WriteLine(bot.GetMessage(0));
+            Console.WriteLine(bot.GetPostOverview(0));
+            Console.WriteLine(bot.GoToPost(0));
+            bot.GoHome();
+            Console.WriteLine(bot.GetMessage(0));
+            // Test(new Tests(bot));
+        }
+        static void Test(Tests tests)
+        {
+            var methods = tests.GetType().GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance |
+                BindingFlags.Public);
+            foreach (MethodInfo method in methods)
+            {
+                Console.WriteLine($"{method.Name}: ");
+                method.Invoke(tests, null);
+                Console.WriteLine("\n");
+                Console.WriteLine("Done. Press enter to continue...");
+                Console.ReadLine();
+            }
+            Console.WriteLine("Finished.");
         }
     }
 }

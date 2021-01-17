@@ -11,30 +11,32 @@ namespace GoogleCRBot
 {
     public partial class ClassroomBot : IDisposable
     {
-        BrowserConfig browserConf { get; }
         internal Config config { get; }
         IWebDriver driver { get; }
         // Timeout
         WebDriverWait wait { get; }
+        SelectorFetcher selFetcher { get; }
         const string CONFIG = "config.json";
         public ClassroomBot()
         {
             config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(CONFIG));
             driver = DriverFactory.InitDriver(config.DriverFolder, config.PreferredBrowser);
-            browserConf = DriverFactory.GetBrowserData(config);
+            // ITimeouts timeouts = driver.Manage().Timeouts();
+            // timeouts.PageLoad = new TimeSpan(0, 0, 2);
+            // timeouts.ImplicitWait = new TimeSpan(0, 0, 2);
             wait = new WebDriverWait(driver, new TimeSpan(0, 0, 5));
+            selFetcher = new SelectorFetcher(driver);
         }
-
-        public void SendOnPost(string message, int index)
+        public void SendOnMessage(string message, int index)
         {
             if (index < 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
-            WriteOnPost(message, index)
+            WriteOnMessage(message, index)
                 .SendKeys(Keys.Tab + Keys.Enter);
         }
-        internal IWebElement WriteOnPost(string message, int index)
+        internal IWebElement WriteOnMessage(string message, int index)
         {
             if (index < 0)
             {
@@ -47,114 +49,114 @@ namespace GoogleCRBot
             return el;
         }
         /// <summary>
-        /// Gets the post at the index starting from the top of the classroom
+        /// Gets post from the top of the classroom
         /// </summary>
-        /// <param name="index">Should be atleast zero</param>
+        /// <param name="index">Index of post</param>
         /// <returns></returns>
-        public Post GetPost(int index)
+        public Message GetMessage(int index)
         {
             if (index < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
-            // Could make into data class which holds selectors and such
-            Dictionary<string, string> selectorMap = new();
-
-            // Add all of post's properties to map
-            var props = typeof(Post).GetProperties();
-            foreach (var prop in props)
-            {
-                selectorMap.Add(prop.Name, "");
-            }
-
             // Get first post
-            Post post = findPost(index, selectorMap);
-            return post;
+            return selFetcher.Find<Message>(index);
+        }
+        public Post GetPostOverview(int index)
+        {
+            if (index < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+            // Take only the teacher's name
+            var post = selFetcher
+                                .Find<Post>(index,
+                                    item => item != null && !string.IsNullOrEmpty(item.Teacher)
+                                );
+            int postedWord = post.Teacher.IndexOf("posted");
+            string teacher = post.Teacher.Substring(0, postedWord);
+
+            // Take only the assignment's name
+            string name;
+            if (post.Name.Contains("Assignment"))
+            {
+                int firstQuote = post.Name.IndexOf('"') + 1;
+                int lastQuote = post.Name.LastIndexOf('"');
+                name = post.Name.Substring(startIndex: firstQuote, length: lastQuote - firstQuote);
+            }
+            else
+            {
+                int firstQuote = post.Name.IndexOf('\'') + 1;
+                int lastQuote = post.Name.LastIndexOf('\'');
+                name = post.Name.Substring(startIndex: firstQuote, length: lastQuote - firstQuote);
+            }
+
+            return new Post()
+            {
+                Teacher = teacher,
+                Timestamp = post.Timestamp,
+                Name = name,
+                WebElement = post.WebElement
+            };
+        }
+        public Post GoToPost(int index)
+        {
+            Post item = GetPostOverview(index);
+            item.WebElement.Click();
+            return item;
+        }
+        internal IWebElement WriteOnCurrentPost(string message)
+        {
+            IWebElement el = wait.Until(driver => driver.FindElement(
+                By.XPath(@"/html/body/div[2]/div/div/div[2]/div[2]/div[9]/div/div/div[4]/div/div[2]/div[1]/div/div/div[2]"))
+            );
+            wait.Until(driver => el.Displayed);
+            el.SendKeys(message);
+            return el;
+        }
+        public void SendOnCurrentPost(string message)
+        {
+            IWebElement el = WriteOnCurrentPost(message);
+            el.SendKeys(Keys.Tab + Keys.Enter);
         }
 
-        /// <summary>
-        /// Searches trough posts from the top of the page.
-        /// </summary>
-        /// <param name="index">Post index.</param>
-        /// <param name="selectorMap">Map with keys matching Post type's props</param>
-        /// <returns></returns>
-        private Post findPost(int index, Dictionary<string, string> selectorMap)
+        public void GoHome()
         {
-            // Max 10 posts back
-            if (index < 0 || index > 10) throw new ArgumentOutOfRangeException(nameof(index));
-
-            string posts = "/html/body/div[2]/div/div[2]/main/section/div/div[2]";
-            Post post = null;
-            for (int i = 1; index >= 0;)
-            {
-                bool found = false;
-                do
-                {
-                    string selected = $"{posts}/div[{i}]";
-
-                    selectorMap["Name"] = $"{selected}/div[1]/div[1]/div[1]/div/div/span";
-                    selectorMap["Timestamp"] = $"{selected}/div[1]/div[1]/div[1]/span";
-                    selectorMap["Message"] = $"{selected}/div[1]/div[2]/div[1]/html-blob/span";
-
-                    found = tryGetPost(selectorMap, out post);
-                    i++;
-                } while (!found && i < 10);
-                index--;
-            }
-            return post;
-        }
-
-        public async Task<bool> Login()
-        {
-            try
-            {
-                wait.Until(driver => driver.Navigate()).GoToUrl("https://classroom.google.com/u/h");
-                await LoginTroughUser();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Got error: " + ex.Message);
-                return false;
-            }
             driver.Navigate().GoToUrl(config.ClassroomLink);
-            if (driver.Url != config.ClassroomLink)
-            {
-                return false;
-            }
-            await WaitFor(browserConf.Delays["classroom"]["onLoad"]);
+        }
+
+        public bool Login()
+        {
+            wait.Until(driver => driver.Navigate()).GoToUrl(config.ClassroomLink);
+            LoginTroughUser();
             return true;
         }
 
         // Google default login screen
-        private async Task LoginTroughUser()
+        private void LoginTroughUser()
         {
             (string username, string password) = config.User;
 
             // send username
-            wait.Until(driver =>
+            IWebElement identifier = wait.Until(driver =>
                 driver.FindElement(By.CssSelector("#identifierId"))
-            ).SendKeys(username + Keys.Enter);
-
-            // Delay
-            await WaitFor(browserConf.Delays["login"]["afterUsername"]);
-
+            );
+            wait.Until(driver => identifier.Displayed);
+            identifier.SendKeys(username + Keys.Enter);
             // send password
-            wait.Until(driver =>
-                driver.FindElement(By.CssSelector("#password > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > input:nth-child(1)"))
-            ).SendKeys(password + Keys.Enter);
-
-            // Delay
-            await WaitFor(browserConf.Delays["login"]["afterLogin"]);
+            IWebElement passwordEl = wait.Until(driver =>
+            {
+                return driver.FindElement(
+                    By.XPath("//*[@id=\"password\"]/div[1]/div/div[1]/input")
+                );
+            });
+            wait.Until(driver => passwordEl.Displayed);
+            passwordEl.SendKeys(password + Keys.Enter);
         }
-        async Task WaitFor(float seconds)
+        private void WaitFor(float seconds)
         {
-            if (seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
-            int ms = (int)(seconds * 1000);
-            Console.WriteLine("Delaying for " + ms + " milliseconds.");
-            await Task.Delay(ms);
-            Console.WriteLine("Done");
+            Task.Delay((int)(seconds * 1000)).Wait();
         }
-
         public void Dispose()
         {
             driver.Dispose();
