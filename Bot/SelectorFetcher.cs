@@ -17,7 +17,7 @@ namespace GoogleCRBot
         {
             this.driver = driver;
             wait = new WebDriverWait(driver, new TimeSpan(0, 0, 0, 0, 500));
-            firstWait = new WebDriverWait(driver, new TimeSpan(0, 0, 5));
+            firstWait = new WebDriverWait(driver, new TimeSpan(0, 0, 4));
         }
         /// <summary>
         /// Populates T object with the fetched FromSelectors
@@ -26,7 +26,7 @@ namespace GoogleCRBot
         /// <param name="isXpath">Are selectors xpath</param>
         /// <typeparam name="T">Class with certain attributes</typeparam>
         /// <returns>Populated T item</returns>
-        private T get<T>(string baseSelector, bool isXpath) where T : new()
+        private T fill<T>(string baseSelector, bool isXpath) where T : new()
         {
             T toFill = new T();
 
@@ -69,17 +69,19 @@ namespace GoogleCRBot
         private IWebElement fetchSelector(string selector, bool isXpath)
         {
             WebDriverWait waiter = firstWait ?? wait;
-            IWebElement el = waiter.Until(driver =>
+            IWebElement el;
+            if (isXpath)
             {
-                if (isXpath)
-                {
-                    return driver.FindElement(By.XPath(selector));
-                }
-                else
-                {
-                    return driver.FindElement(By.CssSelector(selector));
-                }
-            });
+                el = waiter.Until(driver =>
+                   driver.FindElement(By.XPath(selector))
+                );
+            }
+            else
+            {
+                el = waiter.Until(driver =>
+                  driver.FindElement(By.CssSelector(selector))
+                );
+            }
             if (firstWait != null) firstWait = null;
             return el;
         }
@@ -101,7 +103,7 @@ namespace GoogleCRBot
 
 
         /// <summary>
-        /// Enumerates '{index}' in T
+        /// Enumerates from top of classroom: '{index}' in T's selectors
         /// </summary>
         /// <param name="index">Index from top of classroom.</param>
         /// <param name="found">
@@ -111,7 +113,7 @@ namespace GoogleCRBot
         /// </param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        internal T Find<T>(int index, Predicate<T> found = null) where T : new()
+        internal T Get<T>(int index, Predicate<T> found = null) where T : new()
         {
             if (found == null)
             {
@@ -128,7 +130,7 @@ namespace GoogleCRBot
                     string selector = baseClass.Selector.Replace("{index}", i.ToString());
                     try
                     {
-                        item = get<T>(selector, isXpath);
+                        item = fill<T>(selector, isXpath);
                     }
                     catch //(Exception ex)
                     {
@@ -140,6 +142,36 @@ namespace GoogleCRBot
             }
 
             return item;
+        }
+        internal T FindAfter<T>(T item, int times) where T : new()
+        {
+            T el = default(T);
+            FromSelector baseClass = typeof(T).GetCustomAttribute<FromSelector>();
+            bool isXpath = baseClass is FromXPath;
+            int i = 1;
+            bool found = false;
+            while (times >= 0)
+            {
+                do
+                {
+                    string selector = baseClass.Selector.Replace("{index}", i.ToString());
+                    try
+                    {
+                        el = fill<T>(selector, isXpath);
+                    }
+                    catch //(Exception ex)
+                    {
+                        el = default(T);
+                    }
+                    i++;
+                } while (el == null && i < POST_DEPTH);
+                if (el.Equals(item)) found = true;
+                if (found)
+                {
+                    times--;
+                }
+            }
+            return el;
         }
     }
 }

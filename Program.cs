@@ -17,11 +17,12 @@ namespace Main
         public void WriteOnMessage()
         {
             Console.WriteLine("Writing message");
-            bot.WriteOnMessage("Добър ден", 1);
+            Message msg = bot.GetMessage(0);
+            bot.WriteOnMessage(msg, "Добър ден");
         }
         public void WriteOnPost()
         {
-            bot.GoToPost(0);
+            bot.GoToPost(bot.GetPost(0));
             bot.WriteOnCurrentPost("Добре");
             Console.WriteLine("Press enter to go back...");
             Console.ReadLine();
@@ -29,7 +30,7 @@ namespace Main
         }
         public void FetchPostOverview()
         {
-            Post item = bot.GetPostOverview(0);
+            Post item = bot.GetPost(0);
             Console.WriteLine(item.Teacher);
             Console.WriteLine(item.Timestamp);
             Console.WriteLine(item.Name);
@@ -49,10 +50,14 @@ namespace Main
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Config config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
             using var bot = new ClassroomBot(config);
-            bot.Login();
-            Console.WriteLine(bot.GetMessage(0));
-            Console.WriteLine(bot.GetPostOverview(0));
-            Console.WriteLine(bot.GoToPost(0));
+            Console.WriteLine("Logged in: " + bot.Login());
+            Message msg = bot.GetMessage(0);
+            Console.WriteLine(msg);
+            bot.WriteOnMessage(msg, "Добър ден.");
+            Console.ReadLine();
+            Post post = bot.GetPost(0);
+            Console.WriteLine(post);
+            bot.GoToPost(post);
             bot.GoHome();
             Console.WriteLine(bot.GetMessage(0));
             // Test(new Tests(bot));

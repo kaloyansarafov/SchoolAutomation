@@ -15,28 +15,21 @@ namespace GoogleCRBot
         {
             this.config = config;
             driver = DriverFactory.InitDriver(config.Driver);
-            wait = new WebDriverWait(driver, new TimeSpan(0, 0, 5));
+            wait = new WebDriverWait(driver, new TimeSpan(0, 0, 7));
             selFetcher = new SelectorFetcher(driver);
         }
-        public void SendOnMessage(string message, int index)
+        public void SendOnMessage(Message message, string text)
         {
-            if (index < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
-            WriteOnMessage(message, index)
+            WriteOnMessage(message, text)
                 .SendKeys(Keys.Tab + Keys.Enter);
         }
-        internal IWebElement WriteOnMessage(string message, int index)
+        internal IWebElement WriteOnMessage(Message message, string text)
         {
-            if (index < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
+            Console.WriteLine(message.WebElement.Text);
             IWebElement el = wait.Until(driver =>
-                driver.FindElement(By.XPath("//*[@id=\":1.t\"]".Replace("1", (index + 1).ToString())))
+                message.WebElement.FindElement(By.XPath(".//div[2]/div/div[3]/div/div[2]/div/div/div/div[2]"))
             );
-            el.SendKeys(message);
+            el.SendKeys(text);
             return el;
         }
         /// <summary>
@@ -51,9 +44,13 @@ namespace GoogleCRBot
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
             // Get first post
-            return selFetcher.Find<Message>(index);
+            return selFetcher.Get<Message>(index);
         }
-        public Post GetPostOverview(int index)
+        public Message GetMessageAfter(Message message, int times)
+        {
+            return selFetcher.FindAfter(message, times);
+        }
+        public Post GetPost(int index)
         {
             if (index < 0)
             {
@@ -61,9 +58,19 @@ namespace GoogleCRBot
             }
             // Take only the teacher's name
             var post = selFetcher
-                                .Find<Post>(index,
+                                .Get<Post>(index,
                                     item => item != null && !string.IsNullOrEmpty(item.Teacher)
                                 );
+            return parse(post);
+        }
+        public Post GetPostAfter(Post post, int times)
+        {
+            var find = selFetcher.FindAfter(post, times);
+            return parse(find);
+        }
+
+        private static Post parse(Post post)
+        {
             int postedWord = post.Teacher.IndexOf("posted");
             string teacher = post.Teacher.Substring(0, postedWord);
 
@@ -90,11 +97,10 @@ namespace GoogleCRBot
                 WebElement = post.WebElement
             };
         }
-        public Post GoToPost(int index)
+
+        public void GoToPost(Post post)
         {
-            Post item = GetPostOverview(index);
-            item.WebElement.Click();
-            return item;
+            post.WebElement.Click();
         }
         internal IWebElement WriteOnCurrentPost(string message)
         {
@@ -120,7 +126,12 @@ namespace GoogleCRBot
         {
             wait.Until(driver => driver.Navigate()).GoToUrl(config.ClassroomLink);
             LoginTroughUser();
-            return true;
+            int lastSlash = config.ClassroomLink.LastIndexOf('/');
+            string crID = config.ClassroomLink[lastSlash..];
+            bool loggedIn = wait.Until(driver =>
+                driver.Url.Contains(crID)
+            );
+            return loggedIn;
         }
 
         // Google default login screen
