@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using OpenQA.Selenium;
 
 namespace GoogleMeetBot
@@ -32,15 +33,21 @@ namespace GoogleMeetBot
         public void EnterMeet(string link)
         {
             driver.Navigate().GoToUrl(link);
-            IWebElement microphone = firstLoad.Until(driver =>
+
+            // bool loadedCookies = LoadCookies(meetCookies);
+            // Console.WriteLine("Loaded meet cookies: " + loadedCookies);
+
+            wait.Until(driver => driver.Url == link);
+            IWebElement microphone = userWait.Until(driver =>
                 driver.FindElement(By.XPath("/html/body/div[1]/c-wiz/div/div/div[7]/div[3]/div/div/div[2]/div/div[1]/div[1]/div[1]/div/div[3]/div[1]/div/div/div"))
             );
+            wait.Until(driver => microphone.Displayed);
             string muted = microphone.GetAttribute("data-is-muted");
             Console.WriteLine("Mic is muted: " + muted);
             if (!bool.Parse(muted))
             {
                 microphone.Click();
-                Console.WriteLine("Mic is muted: " + microphone.GetAttribute("data-is-muted"));
+                Console.WriteLine("Mic is muted");
             }
 
             IWebElement camera = driver.FindElement(By.XPath("/html/body/div[1]/c-wiz/div/div/div[7]/div[3]/div/div/div[2]/div/div[1]/div[1]/div[1]/div/div[3]/div[2]/div/div"));
@@ -52,11 +59,11 @@ namespace GoogleMeetBot
                 Console.WriteLine("Camera is off: " + camera.GetAttribute("data-is-muted"));
             }
 
-            //TODO Wait for button to showup
-            // \/ \/ \/ \/ \/ \/ \/ Crashes
-            IWebElement joinButton = driver.FindElement(By.XPath("/html/body/div[1]/c-wiz/div/div/div[7]/div[3]/div/div/div[2]/div/div[1]/div[2]/div/div[2]/div/div[1]/div[1]"));
-            wait.Until(driver => joinButton.Displayed && joinButton.Enabled);
+            IWebElement joinButton = driver.FindElement(By.XPath("/html/body/div[1]/c-wiz/div/div/div[7]/div[3]/div/div/div[2]/div/div[1]/div[2]/div/div[2]/div/div[1]/div[1]/span/span"));
+            wait.Until(driver => joinButton.Displayed);
             joinButton.Click();
+
+            // SaveCookies(driver.Manage().Cookies.AllCookies, meetCookies);
         }
         public void LeaveMeet()
         {

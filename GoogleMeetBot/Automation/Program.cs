@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using GoogleMeetBot;
 using Newtonsoft.Json;
+using OpenQA.Selenium.Firefox;
 
 namespace Automation
 {
@@ -10,8 +11,22 @@ namespace Automation
     {
         static async Task Main(string[] args)
         {
+            FirefoxProfile profile = new();
+            FirefoxOptions opts = new();
+            opts.Profile = profile;
+            string driverPath = Path.Combine(Path.GetFullPath("."), "drivers");
+            using (var fd = new FirefoxDriver(driverPath, opts))
+            {
+                Console.WriteLine("Enter");
+                Console.ReadLine();
+            }
+            // await MeetTest();
+        }
+
+        private static async Task MeetTest()
+        {
             MeetConfig config = JsonConvert.DeserializeObject<MeetConfig>(File.ReadAllText(Path.GetFullPath(".") + "/config.json"));
-            using MeetBot bot = new MeetBot(config);
+            MeetBot bot = new MeetBot(config);
             bool loggedIn = bot.Login();
             if (!loggedIn)
             {
@@ -22,8 +37,7 @@ namespace Automation
                 }
                 Console.WriteLine("Logged in: " + loggedIn);
             }
-            Console.ReadLine();
-            bot.EnterMeet("https://meet.google.com/epu-mgad-opq?authuser=1");
+            bot.EnterMeet("https://meet.google.com/rje-zpyi-jcg");
             await Task.Delay(5000);
             bot.LeaveMeet();
         }

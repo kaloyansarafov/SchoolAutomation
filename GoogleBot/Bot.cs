@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 
@@ -37,6 +41,23 @@ namespace GoogleBot
             });
             loginWait.Until(driver => passwordEl.Displayed);
             passwordEl.SendKeys(password + Keys.Enter);
+        }
+        protected void SaveCookies(ReadOnlyCollection<Cookie> cookies, string cookiePath)
+        {
+            File.WriteAllText(cookiePath, JsonConvert.SerializeObject(cookies));
+        }
+        protected bool LoadCookies(string cookiePath)
+        {
+            if (!File.Exists(cookiePath)) return false;
+            var dictArr = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(File.ReadAllText(cookiePath));
+            var cookies = driver.Manage().Cookies;
+            int addedCookies = 0;
+            foreach (Dictionary<string, object> dict in dictArr)
+            {
+                cookies.AddCookie(Cookie.FromDictionary(dict));
+                addedCookies++;
+            }
+            return addedCookies > 0;
         }
 
         public void Dispose()

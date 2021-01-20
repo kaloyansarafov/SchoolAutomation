@@ -19,7 +19,7 @@ namespace Tests
         [Test]
         public void EnterMeet()
         {
-            Assert.True(bot.EnterMeet("https://meet.google.com/cbc-hsxd-erc?authuser=1"));
+            bot.EnterMeet("https://meet.google.com/cbc-hsxd-erc?authuser=1");
         }
         [OneTimeTearDown]
         public void ClassTeardown()

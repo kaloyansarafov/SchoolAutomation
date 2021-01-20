@@ -19,39 +19,62 @@ namespace Automation
             {
                 Console.WriteLine("Invalid config file");
             }
-            using Bot bot = new Bot(config, HelloMsg);
-            Console.WriteLine("Press any key to exit...");
+            CancellationTokenSource source = new();
+            using Bot bot = new Bot(config, HelloMsg, source.Token);
+            DateTime start = DateTime.Now;
+            Task endTime = Task.Run(() =>
+            {
+                while (true)
+                {
+                    TimeSpan elapsed = DateTime.Now - start;
+                    if (elapsed.Hours == 5)
+                    {
+                        source.Cancel();
+                        break;
+                    }
+                }
+            }, source.Token);
+            Console.WriteLine("Press enter to exit.");
             Console.ReadLine();
+            source.Cancel();
         }
         static Task HelloMsg(ClassroomBot bot, CancellationToken token)
         {
             // Post lastPost = null;
-            Message lastMessage = null;
             return Task.Run(async () =>
             {
-                while (true)
+                Message lastMessage = null;
+                try
                 {
-                    if (token.IsCancellationRequested) break;
-                    Message latestMsg = bot.GetMessage(0);
-                    if (latestMsg != lastMessage)
+                    while (true)
                     {
-                        Console.WriteLine(latestMsg);
-                        if (latestMsg.Information.ContainsGreeting()
-                            || latestMsg.Information.IsMeetLink())
+                        if (token.IsCancellationRequested) break;
+                        Message latestMsg = bot.GetMessage(0);
+                        if (latestMsg != lastMessage)
                         {
-                            if (!AreLangClass(latestMsg, lastMessage))
+                            Console.WriteLine(latestMsg);
+                            if (latestMsg.Information.ContainsGreeting()
+                                || latestMsg.Information.IsMeetLink())
                             {
-                                latestMsg = LangGroupFilter(bot, latestMsg);
-                                bot.SendOnMessage(latestMsg, "Добър ден.");
-                                Console.WriteLine("Добър ден " + latestMsg.Teacher);
+                                if (!AreLangClass(latestMsg, lastMessage))
+                                {
+                                    latestMsg = LangGroupFilter(bot, latestMsg);
+                                    bot.SendOnMessage(latestMsg, "Добър ден.");
+                                    Console.WriteLine("Добър ден " + latestMsg.Teacher);
+                                }
                             }
                         }
+                        lastMessage = latestMsg;
+
+
+                        await Task.Delay(new TimeSpan(0, minutes: 1, 0), token);
                     }
-                    lastMessage = latestMsg;
-
-
-                    await Task.Delay(new TimeSpan(0, minutes: 1, 0), token);
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"{nameof(HelloMsg)} caught: " + ex.Message);
+                }
+                Console.WriteLine($"{nameof(HelloMsg)} is done.");
             });
         }
         // Post latestPost = bot.GetPost(0);
@@ -119,13 +142,15 @@ namespace Automation
     public class Bot : IDisposable
     {
         protected ClassroomBot bot;
-        protected CancellationTokenSource source = new CancellationTokenSource();
+        private readonly CancellationToken token;
+
         public Task Task { get; }
-        public Bot(CRConfig config, Func<ClassroomBot, CancellationToken, Task> loop)
+        public Bot(CRConfig config, Func<ClassroomBot, CancellationToken, Task> loop, CancellationToken token)
         {
             bot = new ClassroomBot(config);
             Login();
-            Task = loop(bot, source.Token);
+            Task = loop(bot, token);
+            this.token = token;
         }
         void Login()
         {
@@ -145,9 +170,7 @@ namespace Automation
 
         public void Dispose()
         {
-            source.Cancel();
             ((IDisposable)bot).Dispose();
-            source.Dispose();
             Task.Dispose();
         }
     }

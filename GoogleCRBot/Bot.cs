@@ -3,6 +3,10 @@ using OpenQA.Selenium.Support.UI;
 using System;
 using GoogleCRBot.Data;
 using GoogleBot;
+using System.Collections.ObjectModel;
+using System.IO;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace GoogleCRBot
 {
@@ -10,6 +14,7 @@ namespace GoogleCRBot
     {
         SelectorFetcher selFetcher { get; }
         WebDriverWait wait;
+        const string cookiePath = "cookies.json";
         public ClassroomBot(CRConfig config) : base(config)
         {
             this.driver = DriverFactory.InitDriver(this.config.Driver);
@@ -24,12 +29,27 @@ namespace GoogleCRBot
         }
         internal IWebElement WriteOnMessage(Message message, string text)
         {
-            // Console.WriteLine(message.WebElement.Text);
+            UpdateFeed();
             IWebElement el = wait.Until(driver =>
                 message.WebElement.FindElement(By.XPath(".//div[2]/div/div[3]/div/div[2]/div/div/div/div[2]"))
             );
             el.SendKeys(text);
             return el;
+        }
+        void UpdateFeed()
+        {
+            try
+            {
+                IWebElement el = driver.FindElement(By.XPath("/html/body/nav/div[3]/div[2]/div/div/div/div"));
+                if (el.Displayed)
+                {
+                    el.Click();
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                // Do nothing.
+            }
         }
         /// <summary>
         /// Gets post from the top of the classroom
@@ -38,6 +58,7 @@ namespace GoogleCRBot
         /// <returns></returns>
         public Message GetMessage(int index)
         {
+            UpdateFeed();
             if (index < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
@@ -51,6 +72,7 @@ namespace GoogleCRBot
         }
         public Post GetPost(int index)
         {
+            UpdateFeed();
             if (index < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
@@ -126,7 +148,7 @@ namespace GoogleCRBot
         {
             Credentials = (username, password);
         }
-
+        static string classroomLink = "https://classroom.google.com/";
         public override bool Login()
         {
             if (string.IsNullOrEmpty(Credentials.username)
@@ -134,14 +156,40 @@ namespace GoogleCRBot
             {
                 throw new Exception("No set credentials");
             }
+            wait.Until(driver => driver.Navigate()).GoToUrl(classroomLink);
+            bool loaded = LoadCookies();
             wait.Until(driver => driver.Navigate()).GoToUrl(config.Link);
-            LoginByCredentials(Credentials.username, Credentials.password);
+
+            if (!loaded)
+            {
+                LoginByCredentials(Credentials.username, Credentials.password);
+            }
+
             int lastSlash = config.Link.LastIndexOf('/');
             string crID = config.Link[lastSlash..];
             bool loggedIn = wait.Until(driver =>
                 driver.Url.Contains(crID)
             );
+            if (!loaded) SaveCookies(driver.Manage().Cookies.AllCookies);
             return loggedIn;
+        }
+        void SaveCookies(ReadOnlyCollection<Cookie> cookies)
+        {
+            File.WriteAllText(cookiePath, JsonConvert.SerializeObject(cookies));
+        }
+        bool LoadCookies()
+        {
+            if (!File.Exists(cookiePath)) return false;
+            var dictArr = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(File.ReadAllText(cookiePath));
+            var cookies = driver.Manage().Cookies;
+            int addedCookies = 0;
+            foreach (Dictionary<string, object> dict in dictArr)
+            {
+                Console.WriteLine("Adding cookie");
+                cookies.AddCookie(Cookie.FromDictionary(dict));
+                addedCookies++;
+            }
+            return addedCookies > 0;
         }
 
     }

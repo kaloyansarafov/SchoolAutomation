@@ -11,32 +11,9 @@ namespace GoogleBot
         const string defaultURI = "http://127.0.0.1";
         public static IWebDriver InitDriver(DriverConfig config)
         {
-            // DriverWithExe driver = new DriverWithExe();
             string driverName = getDriverName(config.PreferredBrowser);
             DriverOptions options = getBrowserOptions(config);
             IWebDriver driver = getDriver(config, options);
-            // string uri = defaultURI + ":" + getDefaultPort(config.PreferredBrowser);
-
-            // try
-            // {
-            //     // Console.WriteLine("Attaching webdriver");
-            //     driver.Connect(new Uri(uri), options);
-            // }
-            // catch (OpenQA.Selenium.WebDriverException)
-            // {
-            //     // Console.WriteLine("Starting webdriver");
-
-            //     string driverFile = $"{config.DriverFolder}/{driverName}";
-            //     if (System.OperatingSystem.IsWindows())
-            //     {
-            //         driverFile += ".exe";
-            //     }
-            //     driver.StartDriverExe(driverFile);
-
-            //     // Try to reatach
-            //     driver.Connect(new Uri(uri), options);
-            // }
-            // Console.WriteLine("Attached webdriver");
             return driver;
         }
 
@@ -60,23 +37,39 @@ namespace GoogleBot
 
         private static DriverOptions getBrowserOptions(DriverConfig config)
         {
+            DriverOptions opts;
             switch (config.PreferredBrowser)
             {
                 case "firefox":
+                    // var ffProfile = new OpenQA.Selenium.Firefox.FirefoxProfile();
+                    // ffProfile.SetPreference("profile.default_content_setting_values.media_stream_mic", 1);
+                    // ffProfile.SetPreference("profile.default_content_setting_values.media_stream_camera", 1);
                     var ffOpts = new OpenQA.Selenium.Firefox.FirefoxOptions();
+                    ffOpts.Profile = new FirefoxProfile();
+                    // ffOpts.Profile.SetPreference("profile.default_content_setting_values.media_stream_camera", 1);
+                    // ffOpts.Profile.SetPreference("profile.default_content_setting_values.media_stream_mic", 1);
 
                     if (config.RunHeadless) ffOpts.AddArgument("--headless");
+                    ffOpts.LogLevel = FirefoxDriverLogLevel.Fatal;
 
-                    return ffOpts;
+                    opts = ffOpts;
+                    break;
                 case "chrome":
                     var chromeOpts = new OpenQA.Selenium.Chrome.ChromeOptions();
-
                     if (config.RunHeadless) chromeOpts.AddArgument("--headless");
+                    chromeOpts.AddArgument("--disable-user-media-security");
 
-                    return chromeOpts;
+                    opts = chromeOpts;
+                    break;
                 default:
                     throw new NotImplementedException("Not implemented for browser: " + config.PreferredBrowser);
             }
+            opts.SetLoggingPreference(LogType.Browser, LogLevel.Off);
+            opts.SetLoggingPreference(LogType.Driver, LogLevel.Off);
+            opts.SetLoggingPreference(LogType.Client, LogLevel.Off);
+            opts.SetLoggingPreference(LogType.Profiler, LogLevel.Off);
+            opts.SetLoggingPreference(LogType.Server, LogLevel.Off);
+            return opts;
         }
 
         private static string getDriverName(string browser)
