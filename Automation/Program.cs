@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,15 +41,17 @@ namespace Automation
         }
         static Task HelloMsg(ClassroomBot bot, CancellationToken token)
         {
-            // Post lastPost = null;
             return Task.Run(async () =>
             {
-                Message lastMessage = null;
+                Message lastMessage = LoadFromJson<Message>("lastMessage.json");
                 try
                 {
                     while (true)
                     {
-                        if (token.IsCancellationRequested) break;
+                        if (token.IsCancellationRequested)
+                        {
+                            break;
+                        }
                         Message latestMsg = bot.GetMessage(0);
                         if (latestMsg != lastMessage)
                         {
@@ -66,9 +69,13 @@ namespace Automation
                         }
                         lastMessage = latestMsg;
 
-
                         await Task.Delay(new TimeSpan(0, minutes: 1, 0), token);
                     }
+                }
+                catch (TaskCanceledException)
+                {
+                    SaveToJson(lastMessage, "lastMessage.json");
+                    Console.WriteLine("Saved last message");
                 }
                 catch (Exception ex)
                 {
@@ -77,20 +84,24 @@ namespace Automation
                 Console.WriteLine($"{nameof(HelloMsg)} is done.");
             });
         }
-        // Post latestPost = bot.GetPost(0);
-        // if (latestPost != lastPost)
-        // {
-        //     if (latestPost.Teacher.Contains("Йовчева"))
-        //     {
-        //         // Console.WriteLine(latestPost);
-        //         bot.GoToPost(latestPost);
-        //         bot.SendOnCurrentPost("Добър ден.");
-        //         bot.GoHome();
-        //         Console.WriteLine("\nДобър ден " + latestPost.Teacher);
-        //     }
-        // }
-        // lastPost = latestPost;
-
+        private static T LoadFromJson<T>(string filename)
+        {
+            if (!File.Exists(filename))
+            {
+                return default(T);
+            }
+            return JsonConvert.DeserializeObject<T>(File.ReadAllText(filename));
+        }
+        private static void SaveToJson<T>(T obj, string saveAs)
+        {
+            if (obj == null || obj.Equals(default(T))) return;
+            string json = JsonConvert.SerializeObject(obj);
+            Console.WriteLine(json);
+            using (StreamWriter sw = new StreamWriter(saveAs))
+            {
+                sw.WriteLine(json);
+            }
+        }
         private static bool AreLangClass(Message latestMsg, Message lastMessage)
         {
             if (lastMessage == null)
@@ -149,8 +160,8 @@ namespace Automation
         {
             bot = new ClassroomBot(config);
             Login();
-            Task = loop(bot, token);
             this.token = token;
+            Task = loop(bot, token);
         }
         void Login()
         {
