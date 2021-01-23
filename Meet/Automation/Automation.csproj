@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\GoogleMeetBot\GoogleMeetBot.csproj" />
+    <ProjectReference Include="..\MeetGBot\MeetGBot.csproj" />
     <ProjectReference Include="..\..\GBot\GBot.csproj" />
   </ItemGroup>
 
