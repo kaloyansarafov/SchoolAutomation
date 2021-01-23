@@ -14,9 +14,15 @@ namespace MeetGBot
     {
         readonly ReadOnlyDictionary<string, By> selectors;
 
-        public MeetBot(Config config) : base(config)
+        public MeetBot(Config config) : base(FixConfig(config))
         {
             selectors = new MeetSelectorFactory().Get(config.Driver.Browser);
+        }
+        static Config FixConfig(Config config)
+        {
+            // Needs to be visible
+            if (config.Driver.Headless) config.Driver.Headless = false;
+            return config;
         }
         public bool Login() => base.Login(goToConfigLink: false);
 

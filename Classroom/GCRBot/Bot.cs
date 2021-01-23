@@ -13,9 +13,14 @@ namespace GCRBot
     public partial class ClassroomBot : Bot
     {
         SelectorFetcher selFetcher { get; }
-        public ClassroomBot(Config config) : base(config)
+        public ClassroomBot(Config config) : base(FixConfig(config))
         {
             selFetcher = new SelectorFetcher(driver);
+        }
+        static Config FixConfig(Config config)
+        {
+            config.Driver.Headless = true;
+            return config;
         }
         public bool Login()
         {
