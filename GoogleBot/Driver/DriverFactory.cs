@@ -41,13 +41,7 @@ namespace GoogleBot
             switch (config.PreferredBrowser)
             {
                 case "firefox":
-                    // var ffProfile = new OpenQA.Selenium.Firefox.FirefoxProfile();
-                    // ffProfile.SetPreference("profile.default_content_setting_values.media_stream_mic", 1);
-                    // ffProfile.SetPreference("profile.default_content_setting_values.media_stream_camera", 1);
                     var ffOpts = new OpenQA.Selenium.Firefox.FirefoxOptions();
-                    ffOpts.Profile = new FirefoxProfile();
-                    // ffOpts.Profile.SetPreference("profile.default_content_setting_values.media_stream_camera", 1);
-                    // ffOpts.Profile.SetPreference("profile.default_content_setting_values.media_stream_mic", 1);
 
                     if (config.RunHeadless) ffOpts.AddArgument("--headless");
                     ffOpts.LogLevel = FirefoxDriverLogLevel.Fatal;

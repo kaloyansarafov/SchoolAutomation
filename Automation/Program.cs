@@ -50,6 +50,8 @@ namespace Automation
                     {
                         if (token.IsCancellationRequested)
                         {
+                            SaveToJson(lastMessage, "lastMessage.json");
+                            Console.WriteLine("Saved last message");
                             break;
                         }
                         Message latestMsg = bot.GetMessage(0);
@@ -94,7 +96,11 @@ namespace Automation
         }
         private static void SaveToJson<T>(T obj, string saveAs)
         {
-            if (obj == null || obj.Equals(default(T))) return;
+            if (obj == null || obj.Equals(default(T)))
+            {
+                Console.WriteLine("Null or default object: " + saveAs);
+                return;
+            }
             string json = JsonConvert.SerializeObject(obj);
             Console.WriteLine(json);
             using (StreamWriter sw = new StreamWriter(saveAs))

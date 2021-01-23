@@ -443,6 +443,9 @@ $RECYCLE.BIN/
 *.7z
 *.zip
 .vscode/
-drivers/*
-!drivers/.git*
-config.json
+**/drivers/.*
+!**/drivers/.git*
+**/config.json
+**/cookies.json
+**/*.exe
+**/*driver
