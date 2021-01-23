@@ -1,9 +1,10 @@
 namespace GBot
 {
-    public record Config
+    public class Config
     {
-        public string Link { get; init; }
+        public string Link { get; }
         public DriverConfig Driver { get; } = new DriverConfig();
+        public string CookieFolder { get; set; } = "./";
         public Config(string link)
         {
             Link = link;
@@ -13,7 +14,7 @@ namespace GBot
             Link = "";
         }
     }
-    public record DriverConfig
+    public class DriverConfig
     {
         public string DriverFolder { get; set; }
         public string Browser { get; set; }

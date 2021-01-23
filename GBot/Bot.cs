@@ -30,7 +30,7 @@ namespace GBot
             driver = DriverFactory.InitDriver(config.Driver);
             this.config = config;
 
-            CookiesPath = Cookies.GetPath(config.Driver.Browser);
+            CookiesPath = Path.Combine(config.CookieFolder, Cookies.GetName(config.Driver.Browser));
 
             defaultWait = new WebDriverWait(driver, new TimeSpan(0, 0, seconds: 10));
             firstLoad = new WebDriverWait(driver, new TimeSpan(0, 0, seconds: 15));

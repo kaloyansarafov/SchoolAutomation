@@ -5,7 +5,7 @@ namespace GBot
     public static class Cookies
     {
         private const string CookiesFile = "cookies.json";
-        public static string GetPath(string browser)
+        public static string GetName(string browser)
         {
             switch (browser)
             {
