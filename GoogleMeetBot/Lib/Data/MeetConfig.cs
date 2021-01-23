@@ -1,6 +1,6 @@
-namespace GoogleMeetBot
+namespace MeetGBot
 {
-    public class MeetConfig : GoogleBot.Config
+    public class MeetConfig : GBot.Config
     {
         public MeetConfig(string link) : base(link)
         {

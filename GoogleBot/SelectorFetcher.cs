@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Reflection;
-using GoogleBot.Extensions;
+using GBot.Extensions;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 
-namespace GoogleBot
+namespace GBot
 {
     public class SelectorFetcher
     {

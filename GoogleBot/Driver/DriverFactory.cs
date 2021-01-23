@@ -4,7 +4,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
 
-namespace GoogleBot
+namespace GBot
 {
     public static class DriverFactory
     {

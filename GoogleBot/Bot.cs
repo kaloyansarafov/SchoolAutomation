@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 
-namespace GoogleBot
+namespace GBot
 {
     public abstract class Bot : IDisposable
     {

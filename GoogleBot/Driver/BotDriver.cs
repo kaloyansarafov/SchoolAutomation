@@ -5,7 +5,7 @@ using System.IO;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Remote;
 
-namespace GoogleBot
+namespace GBot
 {
     internal class DriverWithExe : IWebDriver
     {

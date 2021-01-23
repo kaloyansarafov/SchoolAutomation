@@ -1,4 +1,4 @@
-namespace GoogleBot
+namespace GBot
 {
     public class Config
     {

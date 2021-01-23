@@ -1,5 +1,5 @@
 using System;
-namespace GoogleBot.Extensions
+namespace GBot.Extensions
 {
     [System.AttributeUsage(AttributeTargets.Property | AttributeTargets.Class,
                             Inherited = false, AllowMultiple = false)]
