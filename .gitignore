@@ -443,9 +443,7 @@ $RECYCLE.BIN/
 *.7z
 *.zip
 .vscode/
-**/drivers/.*
-!**/drivers/.git*
 **/*[cC]onfig.json
 **/*[cC]ookies.json
-**/*.exe
-**/*driver
+**/geckodriver*
+**/chromedriver*
