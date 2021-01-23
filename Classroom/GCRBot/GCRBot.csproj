@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GoogleBot\GoogleBot.csproj" />
+    <ProjectReference Include="..\..\GBot\GBot.csproj" />
   </ItemGroup>
+
 </Project>

@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\GoogleCRBot\GoogleCRBot.csproj" />
-    <ProjectReference Include="..\GoogleBot\GoogleBot.csproj" />
+    <ProjectReference Include="..\GCRBot\GCRBot.csproj" />
+    <ProjectReference Include="..\..\GBot\GBot.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

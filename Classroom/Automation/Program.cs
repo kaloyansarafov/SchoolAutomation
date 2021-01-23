@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using GoogleCRBot;
-using GoogleCRBot.Data;
+using GCRBot;
+using GCRBot.Data;
 using Newtonsoft.Json;
 
 namespace Automation

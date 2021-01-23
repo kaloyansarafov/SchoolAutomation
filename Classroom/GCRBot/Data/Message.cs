@@ -1,7 +1,7 @@
-using GoogleBot.Extensions;
+using GBot.Extensions;
 using OpenQA.Selenium;
 
-namespace GoogleCRBot.Data
+namespace GCRBot.Data
 {
     [FromXPath("/html/body/div[2]/div/div[2]/main/section/div/div[2]/div[{index}]")]
     public record Message

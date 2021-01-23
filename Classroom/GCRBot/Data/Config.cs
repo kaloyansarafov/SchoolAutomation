@@ -1,6 +1,6 @@
-namespace GoogleCRBot.Data
+namespace GCRBot.Data
 {
-    public class CRConfig : GoogleBot.Config
+    public class CRConfig : GBot.Config
     {
         public User User { get; }
 

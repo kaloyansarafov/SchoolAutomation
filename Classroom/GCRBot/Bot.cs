@@ -1,14 +1,14 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
-using GoogleCRBot.Data;
-using GoogleBot;
+using GCRBot.Data;
+using GBot;
 using System.Collections.ObjectModel;
 using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace GoogleCRBot
+namespace GCRBot
 {
     public partial class ClassroomBot : Bot
     {

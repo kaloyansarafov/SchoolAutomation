@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Lib\GoogleMeetBot.csproj" />
-    <ProjectReference Include="..\..\GoogleBot\GoogleBot.csproj" />
+	  <ProjectReference Include="..\..\GBot\GBot.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -10,7 +9,6 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
