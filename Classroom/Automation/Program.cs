@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using GBot;
 using GCRBot;
 using GCRBot.Data;
 using Newtonsoft.Json;
@@ -11,34 +12,72 @@ namespace Automation
 {
     class Program
     {
-        const bool NemskaGrupa = false;
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            CRConfig config = JsonConvert.DeserializeObject<CRConfig>(File.ReadAllText("config.json"));
-            if (config == null)
-            {
-                Console.WriteLine("Invalid config file");
-            }
             CancellationTokenSource source = new();
-            using Bot bot = new Bot(config, HelloMsg, source.Token);
-            DateTime start = DateTime.Now;
-            Task endTime = Task.Run(() =>
+            var config = GetConfig();
+            if (config == null) return;
+            var bot = new ClassroomBot(config);
+            try
             {
-                while (true)
+                Task t = Task.Run(() =>
                 {
-                    TimeSpan elapsed = DateTime.Now - start;
-                    if (elapsed.Hours == 5)
+                    try
                     {
-                        source.Cancel();
-                        break;
+                        Console.WriteLine("LoggedIn: " + bot.Login());
+                        bot.GoHome();
+                        Console.WriteLine(bot.GetMessage(0));
                     }
-                }
-            }, source.Token);
-            Console.WriteLine("Press enter to exit.");
-            Console.ReadLine();
-            source.Cancel();
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Caught: " + ex.Message);
+                    }
+                }, source.Token);
+                Console.WriteLine("Press enter to stop.");
+                Console.ReadLine();
+                source.Cancel();
+                t.Wait();
+            }
+            finally
+            {
+                bot.Dispose();
+            }
         }
+        static void AutomationScript()
+        {
+            var config = GetConfig();
+            if (config == null) return;
+
+            CancellationTokenSource source = new();
+            Bot bot = new Bot(config, HelloMsg, source.Token);
+            try
+            {
+
+                DateTime start = DateTime.Now;
+                Task endTime = Task.Run(() =>
+                {
+                    while (true)
+                    {
+                        TimeSpan elapsed = DateTime.Now - start;
+                        if (elapsed.Hours == 5)
+                        {
+                            source.Cancel();
+                            break;
+                        }
+                    }
+                }, source.Token);
+                Console.WriteLine("Press enter to exit.");
+                Console.ReadLine();
+                source.Cancel();
+            }
+            finally
+            {
+                bot.Dispose();
+            }
+
+        }
+        const bool NemskaGrupa = false;
         static Task HelloMsg(ClassroomBot bot, CancellationToken token)
         {
             return Task.Run(async () =>
@@ -85,6 +124,16 @@ namespace Automation
                 }
                 Console.WriteLine($"{nameof(HelloMsg)} is done.");
             });
+        }
+        static Config GetConfig()
+        {
+            if (!File.Exists("config.json"))
+            {
+                ClassroomBot.CreateEmpty<Config>();
+                Console.WriteLine("Created sample config.json");
+                return null;
+            }
+            return JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
         }
         private static T LoadFromJson<T>(string filename)
         {
@@ -162,7 +211,7 @@ namespace Automation
         private readonly CancellationToken token;
 
         public Task Task { get; }
-        public Bot(CRConfig config, Func<ClassroomBot, CancellationToken, Task> loop, CancellationToken token)
+        public Bot(Config config, Func<ClassroomBot, CancellationToken, Task> loop, CancellationToken token)
         {
             bot = new ClassroomBot(config);
             Login();

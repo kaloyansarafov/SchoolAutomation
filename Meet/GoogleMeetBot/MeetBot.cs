@@ -14,10 +14,11 @@ namespace MeetGBot
     {
         readonly ReadOnlyDictionary<string, By> selectors;
 
-        public MeetBot(MeetConfig config) : base(config)
+        public MeetBot(Config config) : base(config)
         {
-            selectors = new MeetSelectorFactory().Get(config.Driver.PreferredBrowser);
+            selectors = new MeetSelectorFactory().Get(config.Driver.Browser);
         }
+        public bool Login() => base.Login(goToConfigLink: false);
 
         readonly Regex meetRegex = new Regex(@"\/([a-z]{3,4}-?){3}");
         void Hangup()

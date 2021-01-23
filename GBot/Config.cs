@@ -1,9 +1,9 @@
 namespace GBot
 {
-    public class Config
+    public record Config
     {
-        public string Link { get; set; }
-        public DriverConfig Driver { get; set; } = new DriverConfig();
+        public string Link { get; init; }
+        public DriverConfig Driver { get; } = new DriverConfig();
         public Config(string link)
         {
             Link = link;
@@ -13,10 +13,16 @@ namespace GBot
             Link = "";
         }
     }
-    public class DriverConfig
+    public record DriverConfig
     {
-        public string DriverFolder { get; set; } = "drivers";
-        public string PreferredBrowser { get; set; } = "firefox";
-        public bool RunHeadless { get; set; } = false;
+        public string DriverFolder { get; set; }
+        public string Browser { get; set; }
+        public bool Headless { get; set; }
+        public DriverConfig(string driverFolder = "drivers", string browser = "firefox", bool headless = false)
+        {
+            DriverFolder = driverFolder;
+            Browser = browser;
+            Headless = headless;
+        }
     }
 }

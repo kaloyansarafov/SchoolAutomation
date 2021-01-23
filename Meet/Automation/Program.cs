@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using GBot;
 using MeetGBot;
 using Newtonsoft.Json;
-using OpenQA.Selenium.Firefox;
 
 namespace Automation
 {
@@ -18,11 +18,11 @@ namespace Automation
         {
             if (!File.Exists("config.json"))
             {
-                MeetBot.CreateEmpty<MeetConfig>();
+                MeetBot.CreateEmpty<Config>();
                 Console.WriteLine("Created sample config.");
                 return;
             }
-            MeetConfig config = JsonConvert.DeserializeObject<MeetConfig>(File.ReadAllText(Path.GetFullPath(".") + "/config.json"));
+            Config config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(Path.GetFullPath(".") + "/config.json"));
             MeetBot bot = new MeetBot(config);
             try
             {
