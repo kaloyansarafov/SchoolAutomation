@@ -445,7 +445,7 @@ $RECYCLE.BIN/
 .vscode/
 **/drivers/.*
 !**/drivers/.git*
-**/config.json
-**/cookies.json
+**/*[cC]onfig.json
+**/*[cC]ookies.json
 **/*.exe
 **/*driver
