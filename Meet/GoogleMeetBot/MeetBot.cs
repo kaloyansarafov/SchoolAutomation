@@ -1,14 +1,24 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.RegularExpressions;
+using GBot;
+using Newtonsoft.Json;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
 
 namespace MeetGBot
 {
-    public partial class MeetBot
+    public sealed partial class MeetBot : Bot
     {
+        readonly ReadOnlyDictionary<string, By> selectors;
+
+        public MeetBot(MeetConfig config) : base(config)
+        {
+            selectors = new MeetSelectorFactory().Get(config.Driver.PreferredBrowser);
+        }
+
         readonly Regex meetRegex = new Regex(@"\/([a-z]{3,4}-?){3}");
         void Hangup()
         {
@@ -79,5 +89,6 @@ namespace MeetGBot
             }
             Hangup();
         }
+
     }
 }

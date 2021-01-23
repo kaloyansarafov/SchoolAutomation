@@ -18,7 +18,7 @@ namespace Automation
         {
             if (!File.Exists("config.json"))
             {
-                MeetBot.CreateSampleConfig();
+                MeetBot.CreateEmpty<MeetConfig>();
                 Console.WriteLine("Created sample config.");
                 return;
             }

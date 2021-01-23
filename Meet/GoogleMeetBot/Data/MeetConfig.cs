@@ -5,5 +5,9 @@ namespace MeetGBot
         public MeetConfig(string link) : base(link)
         {
         }
+        public MeetConfig() : base()
+        {
+
+        }
     }
 }

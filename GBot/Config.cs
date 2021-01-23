@@ -3,11 +3,14 @@ namespace GBot
     public class Config
     {
         public string Link { get; set; }
-        public DriverConfig Driver { get; set; }
+        public DriverConfig Driver { get; set; } = new DriverConfig();
         public Config(string link)
         {
             Link = link;
-            Driver = new DriverConfig();
+        }
+        public Config()
+        {
+            Link = "";
         }
     }
     public class DriverConfig

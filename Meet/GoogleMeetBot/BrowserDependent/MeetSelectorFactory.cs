@@ -7,9 +7,9 @@ using OpenQA.Selenium;
 
 namespace MeetGBot
 {
-    internal static class SelectorFactory
+    internal class MeetSelectorFactory : SelectorFactory
     {
-        static ReadOnlyDictionary<string, By> ForFirefox()
+        public override ReadOnlyDictionary<string, By> ForFirefox()
         {
             Dictionary<string, By> ffSels = new();
             ffSels.Add(Elements.CameraButton,
@@ -24,7 +24,7 @@ namespace MeetGBot
                 By.XPath("/html/body/div[1]/c-wiz/div/div/div[7]/div[3]/div/div/div[2]/div/div[1]/div[1]/div[1]/div/div[3]/div[1]/div/div/div"));
             return new ReadOnlyDictionary<string, By>(ffSels);
         }
-        static ReadOnlyDictionary<string, By> ForChrome()
+        public override ReadOnlyDictionary<string, By> ForChrome()
         {
             Dictionary<string, By> sels = new();
             sels.Add(Elements.CameraButton,
@@ -41,18 +41,6 @@ namespace MeetGBot
                 By.XPath("/html/body/div[1]/c-wiz/div/div/div[8]/div[3]/div/div/div[2]/div/div[1]/div[2]/div/div[2]/div/div[1]/div[1]/span/span"));
 
             return new ReadOnlyDictionary<string, By>(sels);
-        }
-        static internal ReadOnlyDictionary<string, By> Get(string browser)
-        {
-            switch (browser)
-            {
-                case "chrome":
-                    return ForChrome();
-                case "firefox":
-                    return ForFirefox();
-                default:
-                    throw new NotSupportedException(browser);
-            }
         }
     }
 }

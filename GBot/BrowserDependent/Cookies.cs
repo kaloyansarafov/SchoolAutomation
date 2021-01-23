@@ -1,11 +1,11 @@
 using System;
 
-namespace MeetGBot
+namespace GBot
 {
-    internal static class Cookies
+    public static class Cookies
     {
         private const string CookiesFile = "cookies.json";
-        internal static string GetPath(string browser)
+        public static string GetPath(string browser)
         {
             switch (browser)
             {
