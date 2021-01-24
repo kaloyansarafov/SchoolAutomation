@@ -34,9 +34,8 @@ namespace GBot
 
             defaultWait = new WebDriverWait(driver, new TimeSpan(0, 0, seconds: 10));
             firstLoad = new WebDriverWait(driver, new TimeSpan(0, 0, seconds: 15));
-            userWait = new WebDriverWait(driver, new TimeSpan(0, minutes: 1, 0));
+            userWait = new WebDriverWait(driver, new TimeSpan(0, minutes: 5, 0));
         }
-
         protected virtual bool Login(bool goToConfigLink = true)
         {
             defaultWait.Until(driver => driver.Navigate()).GoToUrl(EduLink);
@@ -58,7 +57,7 @@ namespace GBot
                 {
                     loggedIn = userWait.Until(driver =>
                     {
-                        Console.WriteLine($"Matching {driver.Url} against {ClassroomLink}");
+                        // Console.WriteLine($"Matching {driver.Url} against {ClassroomLink}");
                         return driver.Url.Contains(ClassroomLink);
                     });
                     if (loggedIn)

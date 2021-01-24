@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using GBot;
 using Newtonsoft.Json;
@@ -10,24 +11,38 @@ using OpenQA.Selenium.Support.UI;
 
 namespace MeetGBot
 {
+    public enum MeetState
+    {
+        NotLoggedIn,
+        InCall,
+        InOverview,
+        OutsideMeet
+    }
     public sealed partial class MeetBot : Bot
     {
-        readonly ReadOnlyDictionary<string, By> selectors;
+        private readonly ReadOnlyDictionary<string, By> selectors;
+        public MeetState State { get; private set; }
 
-        public MeetBot(Config config) : base(FixConfig(config))
-        {
-            selectors = new MeetSelectorFactory().Get(config.Driver.Browser);
-        }
-        static Config FixConfig(Config config)
+        private static Config FixConfig(Config config)
         {
             // Needs to be visible
             if (config.Driver.Headless) config.Driver.Headless = false;
             return config;
         }
-        public bool Login() => base.Login(goToConfigLink: false);
+        public MeetBot(Config config) : base(FixConfig(config))
+        {
+            selectors = new MeetSelectorFactory().Get(config.Driver.Browser);
+            State = MeetState.NotLoggedIn;
+        }
 
-        readonly Regex meetRegex = new Regex(@"\/([a-z]{3,4}-?){3}");
-        void Hangup()
+        public bool Login()
+        {
+            bool loggedIn = base.Login(goToConfigLink: false);
+            if (loggedIn) State = MeetState.OutsideMeet;
+            return loggedIn;
+        }
+
+        private void Hangup()
         {
             IWebElement hangup = defaultWait.Until(driver =>
                 driver.FindElement(
@@ -36,16 +51,91 @@ namespace MeetGBot
             );
             hangup.Click();
         }
-        public bool InMeet()
+
+        public void EnterMeet()
         {
-            if (!meetRegex.Match(driver.Url).Success)
+            if (State != MeetState.InOverview)
             {
-                return false;
+                throw new Exception("Not in meet overview");
             }
+
+            IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
+            userWait.Until(driver => joinButton.Displayed);
+            joinButton.Click();
+            State = MeetState.InCall;
+        }
+
+        public void EnterMeetOverview(string link)
+        {
+            driver.Navigate().GoToUrl(link);
+            if (link.Contains("/lookup/"))
+            {
+                Regex meetLinkReg = new Regex(@"https:\/\/meet.google.com\/([A-Za-z]{3}-?)([a-zA-Z]{4}-?)([A-Za-z]{3}-?)");
+                firstLoad.Until(driver => meetLinkReg.Match(driver.Url).Success);
+            }
+            else firstLoad.Until(driver => driver.Url == link);
+
+            State = MeetState.InOverview;
+
+            MuteElement(selectors[Elements.MicrophoneButton]);
+            MuteElement(selectors[Elements.CameraButton]);
+        }
+        public int PeopleInMeetOverview()
+        {
+            if (State != MeetState.InOverview)
+            {
+                throw new Exception("Not in meet overview");
+            }
+            string peopleInCall = defaultWait.Until(driver =>
+                driver.FindElement(selectors[Elements.PeopleInCallOverview])
+            ).Text;
+
+            if (peopleInCall.Contains("No one else is here")) return 0;
+
+            List<string> people = peopleInCall.Split(',').ToList();
+            if (people.Count == 1)
+            {
+                Console.WriteLine(people[0] + " is alone.");
+                return 1;
+            }
+            else //if (people.Count > 1)
+            {
+                string lastItem = people[people.Count - 1];
+                people.Remove(lastItem);
+                string[] split = lastItem.Split(" and ");
+                if (split.Length > 2)
+                {
+                    throw new Exception("Wrong string: " + lastItem);
+                }
+                people.Add(split[0]);
+                Regex numberReg = new Regex("[1-9]*");
+                Match match = numberReg.Match(split[1]);
+                if (match.Success)
+                {
+                    return people.Count + int.Parse(match.Value);
+                }
+                else
+                {
+                    return people.Count + 1;
+                }
+            }
+        }
+
+        public void LeaveMeet()
+        {
+            if (State != MeetState.InCall)
+            {
+                throw new Exception("Not in meet");
+            }
+            Hangup();
+            State = MeetState.OutsideMeet;
+        }
+
+        private bool TryFindElement(By selector)
+        {
             try
             {
-                IWebElement chat = driver.FindElement(selectors[Elements.ChatButton]);
-                // Console.WriteLine("In meet with " + chat.Text);
+                IWebElement readyToJoinMessage = driver.FindElement(selector);
             }
             catch (NoSuchElementException)
             {
@@ -53,49 +143,25 @@ namespace MeetGBot
             }
             return true;
         }
-        public void EnterMeet(string link)
-        {
-            driver.Navigate().GoToUrl(link);
 
-            firstLoad.Until(driver => driver.Url == link);
-            IWebElement microphone = defaultWait.Until(driver =>
+        private void MuteElement(By selector)
+        {
+            IWebElement webElement = defaultWait.Until(driver =>
             {
                 // Console.WriteLine("Polling for mic");
-                return driver.FindElement(selectors[Elements.MicrophoneButton]);
-            }
-            );
+                return driver.FindElement(selector);
+            });
             userWait.Until(driver =>
             {
                 // Console.WriteLine("Polling for mic enabled and displayed");
-                return microphone.Enabled && microphone.Displayed;
+                return webElement.Enabled && webElement.Displayed;
             });
-            string muted = microphone.GetAttribute("data-is-muted");
+            string muted = webElement.GetAttribute("data-is-muted");
             if (bool.TryParse(muted, out bool result) && !result)
             {
-                microphone.Click();
+                webElement.Click();
                 // Console.WriteLine("Mic is muted");
             }
-
-            IWebElement camera = driver.FindElement(selectors[Elements.CameraButton]);
-            string hidden = camera.GetAttribute("data-is-muted");
-            if (bool.TryParse(hidden, out result) && !result)
-            {
-                camera.Click();
-                // Console.WriteLine("Camera is off");
-            }
-
-            IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
-            userWait.Until(driver => joinButton.Displayed);
-            joinButton.Click();
         }
-        public void LeaveMeet()
-        {
-            if (!InMeet())
-            {
-                throw new Exception("Not in meet");
-            }
-            Hangup();
-        }
-
     }
 }

@@ -4,7 +4,7 @@ namespace GBot
 {
     public class Config
     {
-        public string Link { get; }
+        public string Link { get; init; }
         public DriverConfig Driver { get; } = new DriverConfig();
         public Config(string link)
         {

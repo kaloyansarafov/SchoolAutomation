@@ -51,6 +51,8 @@ namespace GBot
                 case "chrome":
                     var chromeOpts = new OpenQA.Selenium.Chrome.ChromeOptions();
                     if (config.Headless) chromeOpts.AddArgument("--headless");
+                    chromeOpts.AddArgument("--log-level=3");
+                    chromeOpts.AddArgument("--silent");
 
                     opts = chromeOpts;
                     break;

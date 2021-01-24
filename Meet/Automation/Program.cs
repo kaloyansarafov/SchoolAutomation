@@ -36,15 +36,19 @@ namespace Automation
                     }
                     Console.WriteLine("Logged in: " + loggedIn);
                 }
-                bot.EnterMeet("https://meet.google.com/rje-zpyi-jcg");
+                bot.EnterMeetOverview("https://meet.google.com/rje-zpyi-jcg");
+                Console.WriteLine(bot.PeopleInMeetOverview());
+                bot.EnterMeet();
                 await WaitFor(5);
                 bot.LeaveMeet();
 
-                await WaitFor(10);
+                // await WaitFor(10);
 
-                bot.EnterMeet("https://meet.google.com/ewd-kemi-rny");
-                await WaitFor(5);
-                bot.LeaveMeet();
+                // bot.EnterMeetOverview("https://meet.google.com/ewd-kemi-rny");
+                // Console.WriteLine(bot.PeopleInMeetOverview());
+                // bot.EnterMeet();
+                // await WaitFor(5);
+                // bot.LeaveMeet();
             }
             finally
             {

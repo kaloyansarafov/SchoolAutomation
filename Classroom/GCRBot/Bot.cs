@@ -45,7 +45,7 @@ namespace GCRBot
                 }
             }
             // Assumes cookies exist
-            return base.Login();
+            return base.Login(goToConfigLink: true);
         }
     }
     class LoginBot : Bot
