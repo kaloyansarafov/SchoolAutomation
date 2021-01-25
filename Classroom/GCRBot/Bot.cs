@@ -7,11 +7,14 @@ using System.Collections.ObjectModel;
 using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using NLog;
 
 namespace GCRBot
 {
     public partial class ClassroomBot : Bot
     {
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         SelectorFetcher selFetcher { get; }
         public ClassroomBot(Config config) : base(FixConfig(config))
         {
@@ -25,8 +28,10 @@ namespace GCRBot
         public bool Login()
         {
             string path = Path.Combine("./", Cookies.GetName(config.Driver.Browser));
+            logger.Debug("Cookie path: " + path);
             if (!File.Exists(path))
             {
+                logger.Trace("Launching login bot");
                 Config loginConf = new Config();
                 loginConf.Driver.Browser = config.Driver.Browser;
                 loginConf.Driver.Headless = false;
@@ -37,13 +42,15 @@ namespace GCRBot
                     loginBot = new LoginBot(loginConf);
 
                     // Assumes user login
-                    loginBot.Login();
+                    bool loggedIn = loginBot.Login();
+                    if (!loggedIn) logger.Debug("LoginBot failed");
                 }
                 finally
                 {
                     loginBot?.Dispose();
                 }
             }
+            logger.Trace("On to base login");
             // Assumes cookies exist
             return base.Login(goToConfigLink: true);
         }

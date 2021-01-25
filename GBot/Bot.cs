@@ -22,6 +22,7 @@ namespace GBot
         static readonly string EduLink = $"https://{EDU_URI}";
 
         protected readonly string CookiesPath;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         protected Config config { get; }
         protected IWebDriver driver { get; set; }
@@ -42,6 +43,7 @@ namespace GBot
             firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
 
             bool loadedCookies = LoadCookies(CookiesPath);
+            logger.Debug("Loaded cookies: " + loadedCookies);
 
             driver.Navigate().GoToUrl(LoginLink);
 
@@ -57,7 +59,7 @@ namespace GBot
                 {
                     loggedIn = userWait.Until(driver =>
                     {
-                        // Console.WriteLine($"Matching {driver.Url} against {ClassroomLink}");
+                        logger.Trace($"Matching {driver.Url} against {ClassroomLink}");
                         return driver.Url.Contains(ClassroomLink);
                     });
                     if (loggedIn)
@@ -68,7 +70,6 @@ namespace GBot
                         if (firefox) firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
 
                         SaveCookies(driver.Manage().Cookies.AllCookies, CookiesPath);
-
                     }
                 }
                 else
@@ -84,11 +85,9 @@ namespace GBot
             }
             catch (WebDriverTimeoutException ex)
             {
-                Console.WriteLine("Timed out: " + ex.Message);
+                logger.Error("Timed out", ex);
             }
             return false;
-
-
         }
         public void GoHome()
         {
@@ -96,16 +95,19 @@ namespace GBot
             {
                 throw new Exception(nameof(config.Link) + " is invalid");
             }
+            logger.Trace("Going home: " + config.Link);
             driver.Navigate().GoToUrl(config.Link);
         }
 
         protected void SaveCookies(ReadOnlyCollection<Cookie> cookies, string cookiePath)
         {
+            logger.Trace("Saving cookies to " + cookiePath);
             File.WriteAllText(cookiePath, JsonConvert.SerializeObject(cookies));
         }
         protected bool LoadCookies(string cookiePath)
         {
             if (!File.Exists(cookiePath)) return false;
+            logger.Trace("Loading cookies from " + cookiePath);
             var dictArr = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(File.ReadAllText(cookiePath));
             var cookies = driver.Manage().Cookies;
             int addedCookies = 0;
@@ -130,7 +132,7 @@ namespace GBot
             File.WriteAllText(path, JsonConvert.SerializeObject(meetConf, Formatting.Indented));
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             driver.Dispose();
         }

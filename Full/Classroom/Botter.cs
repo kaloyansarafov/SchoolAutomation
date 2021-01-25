@@ -11,10 +11,12 @@ namespace Full
 {
     internal class ClassroomBotter
     {
-        public event EventHandler<MessageEventArgs> OnMessage;
+        public event EventHandler<DataEventArgs<Message>> OnMessage;
+        public event EventHandler<DataEventArgs<Post>> OnPost;
 
         private readonly Config config;
         private CancellationTokenSource source = new();
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ClassroomBotter(Config config)
         {
@@ -33,15 +35,49 @@ namespace Full
             try
             {
                 loopBot.Login();
-                loopBot.Start(LatestMSG);
-                // Console.WriteLine("Awaiting task...");
-                await loopBot.Task;
+                loopBot.Add(LatestMSG);
+                loopBot.Add(LatestPost);
+                foreach (Task t in loopBot.Tasks)
+                {
+                    await t;
+                }
             }
             finally
             {
                 loopBot?.Dispose();
             }
 
+        }
+        private async Task LatestPost(ClassroomBot bot, CancellationToken token)
+        {
+            Post lastPost = null;
+            try
+            {
+                while (true)
+                {
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    Post latestPost = bot.GetPost(0);
+                    // To avoid reference comparison
+                    if ((Post)latestPost != lastPost)
+                    {
+                        OnPost?.Invoke(bot, new DataEventArgs<Post>(latestPost));
+                    }
+                    lastPost = latestPost;
+
+                    await Task.Delay(new TimeSpan(0, minutes: 1, 0), token);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                logger.Info($"{nameof(LatestPost)} canceled successfuly");
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"{nameof(LatestPost)} caught", ex.Message);
+            }
         }
         private async Task LatestMSG(ClassroomBot bot, CancellationToken token)
         {
@@ -57,7 +93,7 @@ namespace Full
                     Message latestMsg = bot.GetMessage(0);
                     if (latestMsg != lastMessage)
                     {
-                        OnMessage.Invoke(bot, new MessageEventArgs(latestMsg));
+                        OnMessage?.Invoke(bot, new DataEventArgs<Message>(latestMsg));
                     }
                     lastMessage = latestMsg;
 
@@ -66,11 +102,11 @@ namespace Full
             }
             catch (TaskCanceledException)
             {
-                Console.WriteLine("Task canceled successfully");
+                logger.Info($"{nameof(LatestMSG)} canceled successfully");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{nameof(LatestMSG)} caught: " + ex.Message);
+                logger.Error($"{nameof(LatestMSG)} caught", ex.Message);
             }
             // Console.WriteLine($"{nameof(LatestMSG)} is done.");
         }

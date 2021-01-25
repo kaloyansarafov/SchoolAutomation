@@ -11,6 +11,7 @@ namespace GBot
         private readonly IWebDriver driver;
         private readonly WebDriverWait wait;
         private WebDriverWait firstWait;
+        private NLog.Logger logger;
         const int POST_DEPTH = 30;
 
         public SelectorFetcher(IWebDriver driver)
@@ -18,6 +19,7 @@ namespace GBot
             this.driver = driver;
             wait = new WebDriverWait(driver, new TimeSpan(0, 0, 0, 0, 500));
             firstWait = new WebDriverWait(driver, new TimeSpan(0, 0, 4));
+            logger = NLog.LogManager.GetCurrentClassLogger();
         }
         /// <summary>
         /// Populates T object with the fetched FromSelectors
@@ -51,7 +53,7 @@ namespace GBot
                     {
                         throw new ElementNotVisibleException();
                     }
-                    object value = parse(el, prop.PropertyType);
+                    object value = Parse(el, prop.PropertyType);
                     prop.SetValue(toFill, value);
                 }
                 else
@@ -69,6 +71,7 @@ namespace GBot
         public IWebElement Fetch(string selector, bool isXpath)
         {
             WebDriverWait waiter = firstWait ?? wait;
+            logger.Trace($"Fetching {selector} for {waiter.Timeout}");
             IWebElement el;
             if (isXpath)
             {
@@ -86,7 +89,7 @@ namespace GBot
             return el;
         }
 
-        object parse(IWebElement el, Type propType)
+        object Parse(IWebElement el, Type propType)
         {
             object value = null;
             if (propType == typeof(string))
@@ -122,6 +125,7 @@ namespace GBot
             var type = typeof(T);
             FromSelector baseClass = type.GetCustomAttribute<FromSelector>();
             bool isXpath = baseClass is FromXPath;
+            //TODO REFACTOR
             T item = default(T);
             for (int i = 1; index >= 0;)
             {

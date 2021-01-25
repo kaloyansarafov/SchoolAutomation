@@ -2,12 +2,12 @@ using GCRBot.Data;
 
 namespace Full
 {
-    internal class MessageEventArgs
+    internal class DataEventArgs<T>
     {
-        public Message Message { get; }
-        public MessageEventArgs(Message msg)
+        public T Data { get; }
+        public DataEventArgs(T data)
         {
-            Message = msg;
+            Data = data;
         }
     }
 }

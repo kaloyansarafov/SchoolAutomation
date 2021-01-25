@@ -5,6 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="NLog" Version="4.7.7" />
     <PackageReference Include="Selenium.Webdriver" Version="3.141.0" />
   </ItemGroup>
 

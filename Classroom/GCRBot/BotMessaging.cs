@@ -18,6 +18,7 @@ namespace GCRBot
                 message.WebElement.FindElement(By.XPath(".//div[2]/div/div[3]/div/div[2]/div/div/div/div[2]"))
             );
             el.SendKeys(text);
+            logger.Trace($"Sending {text} to message");
             return el;
         }
         void UpdateFeed()
@@ -33,6 +34,7 @@ namespace GCRBot
             catch (NoSuchElementException)
             {
                 // Do nothing.
+                logger.Trace("Couldn't update feed...");
             }
         }
         /// <summary>

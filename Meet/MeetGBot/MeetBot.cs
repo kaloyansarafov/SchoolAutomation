@@ -21,6 +21,7 @@ namespace MeetGBot
     public sealed partial class MeetBot : Bot
     {
         private readonly ReadOnlyDictionary<string, By> selectors;
+        private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public MeetState State { get; private set; }
 
         private static Config FixConfig(Config config)
@@ -38,7 +39,11 @@ namespace MeetGBot
         public bool Login()
         {
             bool loggedIn = base.Login(goToConfigLink: false);
-            if (loggedIn) State = MeetState.OutsideMeet;
+            if (loggedIn)
+            {
+                State = MeetState.OutsideMeet;
+                logger.Trace("State change to " + State);
+            }
             return loggedIn;
         }
 
@@ -49,7 +54,10 @@ namespace MeetGBot
                     selectors[Elements.HangupButton]
                 )
             );
+            logger.Info("Hanging up");
             hangup.Click();
+            State = MeetState.OutsideMeet;
+            logger.Trace("State change to " + State);
         }
 
         public void EnterMeet()
@@ -61,8 +69,10 @@ namespace MeetGBot
 
             IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
             userWait.Until(driver => joinButton.Displayed);
+            logger.Info("Joining meet");
             joinButton.Click();
             State = MeetState.InCall;
+            logger.Trace("State change to " + State);
         }
 
         public void EnterMeetOverview(string link)
@@ -70,15 +80,27 @@ namespace MeetGBot
             driver.Navigate().GoToUrl(link);
             if (link.Contains("/lookup/"))
             {
+                logger.Trace("In lookup");
                 Regex meetLinkReg = new Regex(@"https:\/\/meet.google.com\/([A-Za-z]{3}-?)([a-zA-Z]{4}-?)([A-Za-z]{3}-?)");
                 firstLoad.Until(driver => meetLinkReg.Match(driver.Url).Success);
             }
             else firstLoad.Until(driver => driver.Url == link);
 
             State = MeetState.InOverview;
+            logger.Trace("State change to " + State);
 
-            MuteElement(selectors[Elements.MicrophoneButton]);
-            MuteElement(selectors[Elements.CameraButton]);
+            MuteElement(Elements.MicrophoneButton);
+            MuteElement(Elements.CameraButton);
+        }
+        public int PeopleInMeet()
+        {
+            if (State != MeetState.InCall)
+            {
+                throw new Exception("Not in meet call");
+            }
+            IWebElement el = driver.FindElement(selectors[Elements.ChatButton]);
+            logger.Debug("People in meet: " + el.Text);
+            return int.Parse(el.Text.Trim());
         }
         public int PeopleInMeetOverview()
         {
@@ -95,11 +117,11 @@ namespace MeetGBot
             List<string> people = peopleInCall.Split(',').ToList();
             if (people.Count == 1)
             {
-                Console.WriteLine(people[0] + " is alone.");
                 return 1;
             }
             else //if (people.Count > 1)
             {
+                //TODO FIX BUG
                 string lastItem = people[people.Count - 1];
                 people.Remove(lastItem);
                 string[] split = lastItem.Split(" and ");
@@ -128,14 +150,13 @@ namespace MeetGBot
                 throw new Exception("Not in meet");
             }
             Hangup();
-            State = MeetState.OutsideMeet;
         }
 
         private bool TryFindElement(By selector)
         {
             try
             {
-                IWebElement readyToJoinMessage = driver.FindElement(selector);
+                IWebElement el = driver.FindElement(selector);
             }
             catch (NoSuchElementException)
             {
@@ -144,12 +165,13 @@ namespace MeetGBot
             return true;
         }
 
-        private void MuteElement(By selector)
+        private void MuteElement(string element)
         {
+            logger.Trace("Muting element " + element);
             IWebElement webElement = defaultWait.Until(driver =>
             {
                 // Console.WriteLine("Polling for mic");
-                return driver.FindElement(selector);
+                return driver.FindElement(selectors[element]);
             });
             userWait.Until(driver =>
             {
@@ -162,6 +184,11 @@ namespace MeetGBot
                 webElement.Click();
                 // Console.WriteLine("Mic is muted");
             }
+        }
+        public override void Dispose()
+        {
+            if (State == MeetState.InCall) Hangup();
+            base.Dispose();
         }
     }
 }
