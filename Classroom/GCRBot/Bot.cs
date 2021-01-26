@@ -16,14 +16,9 @@ namespace GCRBot
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         SelectorFetcher selFetcher { get; }
-        public ClassroomBot(Config config) : base(FixConfig(config))
+        public ClassroomBot(Config config) : base(config)
         {
             selFetcher = new SelectorFetcher(driver);
-        }
-        static Config FixConfig(Config config)
-        {
-            config.Driver.Headless = true;
-            return config;
         }
         public bool Login()
         {

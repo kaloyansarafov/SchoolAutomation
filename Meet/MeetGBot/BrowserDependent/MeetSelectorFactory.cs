@@ -15,7 +15,7 @@ namespace MeetGBot
             selectors.Add(Elements.CameraButton,
                 By.XPath("/html/body/div[1]/c-wiz/div/div/div[7]/div[3]/div/div/div[2]/div/div[1]/div[1]/div[1]/div/div[3]/div[2]/div/div"));
             selectors.Add(Elements.ChatButton,
-                By.XPath("/html/body/div[1]/c-wiz/div[1]/div/div[7]/div[3]/div[6]/div[3]/div/div[2]/div[1]/span/span/div/div/span[2]"));
+                By.XPath("/html/body/div[1]/c-wiz/div[1]/div/div[7]/div[3]/div[6]/div[3]/div/div[2]/div[1]"));
             selectors.Add(Elements.HangupButton,
                 By.XPath("/html/body/div[1]/c-wiz/div[1]/div/div[7]/div[3]/div[9]/div[2]/div[2]/div"));
             selectors.Add(Elements.JoinButton,
@@ -37,7 +37,8 @@ namespace MeetGBot
                 By.XPath("/html/body/div[1]/c-wiz/div/div/div[8]/div[3]/div/div/div[2]/div/div[1]/div[1]/div[1]/div/div[3]/div[1]/div/div/div"));
 
             selectors.Add(Elements.ChatButton,
-                By.XPath("/html/body/div[1]/c-wiz/div[1]/div/div[8]/div[3]/div[6]/div[3]/div/div[2]/div[1]/span/span/div/div/span[2]"));
+                By.XPath("/html/body/div[1]/c-wiz/div[1]/div/div[8]/div[3]/div[6]/div[3]/div/div[2]/div[1]"));
+
             selectors.Add(Elements.HangupButton,
                 By.XPath("/html/body/div[1]/c-wiz/div[1]/div/div[8]/div[3]/div[9]/div[2]/div[2]/div"));
 

@@ -54,7 +54,7 @@ namespace MeetGBot
                     selectors[Elements.HangupButton]
                 )
             );
-            logger.Info("Hanging up");
+            logger.Debug("Hanging up");
             hangup.Click();
             State = MeetState.OutsideMeet;
             logger.Trace("State change to " + State);
@@ -69,7 +69,7 @@ namespace MeetGBot
 
             IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
             userWait.Until(driver => joinButton.Displayed);
-            logger.Info("Joining meet");
+            logger.Debug("Joining meet");
             joinButton.Click();
             State = MeetState.InCall;
             logger.Trace("State change to " + State);
@@ -98,8 +98,9 @@ namespace MeetGBot
             {
                 throw new Exception("Not in meet call");
             }
-            IWebElement el = driver.FindElement(selectors[Elements.ChatButton]);
-            logger.Debug("People in meet: " + el.Text);
+            IWebElement el = firstLoad.Until(driver =>
+                driver.FindElement(selectors[Elements.ChatButton])
+            );
             return int.Parse(el.Text.Trim());
         }
         public int PeopleInMeetOverview()
@@ -112,34 +113,27 @@ namespace MeetGBot
                 driver.FindElement(selectors[Elements.PeopleInCallOverview])
             ).Text;
 
-            if (peopleInCall.Contains("No one else is here")) return 0;
+            if (peopleInCall.Contains("No one")) return 0;
+            else if (peopleInCall.Contains(" is ")) return 1;
 
-            List<string> people = peopleInCall.Split(',').ToList();
-            if (people.Count == 1)
+            List<string> split = peopleInCall.Split(", ").ToList();
+            string[] andSplit = split[split.Count - 1].Split("and");
+
+            split.Remove(split[split.Count - 1]);
+
+            split.Add(andSplit[0]);
+            Regex reg = new Regex("[0-9]*");
+            var match = reg.Match(andSplit[1].Trim());
+            if (!match.Success)
             {
-                return 1;
+                Console.WriteLine("Success");
+                split.Add(andSplit[1]);
+                return split.Count;
             }
-            else //if (people.Count > 1)
+            else
             {
-                //TODO FIX BUG
-                string lastItem = people[people.Count - 1];
-                people.Remove(lastItem);
-                string[] split = lastItem.Split(" and ");
-                if (split.Length > 2)
-                {
-                    throw new Exception("Wrong string: " + lastItem);
-                }
-                people.Add(split[0]);
-                Regex numberReg = new Regex("[1-9]*");
-                Match match = numberReg.Match(split[1]);
-                if (match.Success)
-                {
-                    return people.Count + int.Parse(match.Value);
-                }
-                else
-                {
-                    return people.Count + 1;
-                }
+                int val = int.Parse(match.Value);
+                return split.Count + val;
             }
         }
 
