@@ -21,45 +21,16 @@ namespace GCRBot
             var post = selFetcher.Get<Post>(index,
                 item => item != null && !string.IsNullOrEmpty(item.Teacher));
 
-            return Parse(post);
+            return post;
         }
-        public Post GetPostAfter(Post post, int times)
+        public Post GetPostAfter(Post post, int times = 1)
         {
             if (!driver.Url.Contains("classroom.google.com"))
             {
                 throw new Exception("Not at classroom url");
             }
             var find = selFetcher.FindAfter(post, times);
-            return Parse(find);
-        }
-
-        private static Post Parse(Post post)
-        {
-            int postedWord = post.Teacher.IndexOf("posted");
-            string teacher = post.Teacher.Substring(0, postedWord);
-
-            // Take only the assignment's name
-            string name;
-            if (post.Name.Contains("Assignment"))
-            {
-                int firstQuote = post.Name.IndexOf('"') + 1;
-                int lastQuote = post.Name.LastIndexOf('"');
-                name = post.Name.Substring(startIndex: firstQuote, length: lastQuote - firstQuote);
-            }
-            else
-            {
-                int firstQuote = post.Name.IndexOf('\'') + 1;
-                int lastQuote = post.Name.LastIndexOf('\'');
-                name = post.Name.Substring(startIndex: firstQuote, length: lastQuote - firstQuote);
-            }
-
-            return new Post()
-            {
-                Teacher = teacher,
-                Timestamp = post.Timestamp,
-                Name = name,
-                WebElement = post.WebElement
-            };
+            return find;
         }
 
         public void GoToPost(Post post)
@@ -72,8 +43,8 @@ namespace GCRBot
         }
         internal IWebElement WriteOnCurrentPost(string message)
         {
-            IWebElement el = defaultWait.Until(driver => driver.FindElement(
-                By.XPath(@"/html/body/div[2]/div/div/div[2]/div[2]/div[9]/div/div/div[4]/div/div[2]/div[1]/div/div/div[2]"))
+            IWebElement el = defaultWait.Until(driver =>
+                driver.FindElement(selectors[Elements.PostInput])
             );
             firstLoad.Until(driver => el.Displayed);
             el.SendKeys(message);

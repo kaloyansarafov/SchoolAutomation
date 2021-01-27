@@ -15,7 +15,9 @@ namespace Full
 
         private readonly LangConfig config;
         private MeetBot meetBot;
+
         private bool languageClass;
+        private string DefaultMeetLink;
 
         public Meet(LangConfig config)
         {
@@ -90,7 +92,7 @@ namespace Full
             }
             else
             {
-                peopleNeeded = 14;
+                peopleNeeded = 10;
             }
 
             return peopleNeeded;
@@ -118,7 +120,7 @@ namespace Full
         {
             if (string.IsNullOrEmpty(link))
             {
-                link = config.DefaultMeetLink;
+                link = DefaultMeetLink;
             }
             if (meetBot.State != MeetState.OutsideMeet)
                 throw new Exception("Meetbot with invalid state: " + meetBot.State);

@@ -154,11 +154,13 @@ namespace GBot
             bool isXpath = baseClass is FromXPath;
             int i = 1;
             bool found = false;
+            logger.Trace("Received {0}", item);
             while (times >= 0)
             {
                 do
                 {
                     string selector = baseClass.Selector.Replace("{index}", i.ToString());
+                    logger.Trace("Filling selector [ {0} ]", selector);
                     try
                     {
                         el = Fill<T>(selector, isXpath);
@@ -169,9 +171,15 @@ namespace GBot
                     }
                     i++;
                 } while (el == null && i < POST_DEPTH);
-                if (el.Equals(item)) found = true;
+                logger.Trace("Found element: {0}", el);
+                if (el.Equals(item))
+                {
+                    found = true;
+                    logger.Trace("{0} matches {1}", el, item);
+                }
                 if (found)
                 {
+                    logger.Trace("Found, counting off: {0}", times);
                     times--;
                 }
             }

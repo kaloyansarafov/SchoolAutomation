@@ -46,7 +46,8 @@ namespace Full
                     break;
                 }
                 Message latest = crBot.GetMessage(0);
-                if (latest != last)
+                logger.Trace("Received message from {0}", latest.Teacher);
+                if ((Message)latest != last)
                 {
                     logger.Debug("Received message from " + latest.Teacher);
                     OnMessageReceived?.Invoke(crBot, new DataEventArgs<Message>(latest, last));
@@ -74,9 +75,10 @@ namespace Full
             {
                 if (!Utils.IsLangClass(latest) && !Utils.IsLangClass(previous))
                 {
+                    latest = LangGroupFilter(bot, latest);
                     logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
                     //TODO Add check for existing comment
-                    // bot.SendOnMessage(eventArgs.Data, "Добър ден.");
+                    bot.SendOnMessage(eventArgs.Data, "Добър ден.");
                     OnGreetingReceived?.Invoke(bot, eventArgs);
                 }
             }
@@ -85,7 +87,7 @@ namespace Full
         {
             if (config.NemskaGrupa && latest.Teacher.Contains("Чапанова"))
             {
-                Message msgAfter = bot.GetMessageAfter(latest, 0);
+                Message msgAfter = bot.GetMessageAfter(latest);
                 if (msgAfter.Teacher.Contains("Вихрогонова"))
                 {
                     logger.Trace("Nemska grupa found teacher");
@@ -98,7 +100,7 @@ namespace Full
             }
             else if (!config.NemskaGrupa && latest.Teacher.Contains("Вихрогонова"))
             {
-                Message msgAfter = bot.GetMessageAfter(latest, 1);
+                Message msgAfter = bot.GetMessageAfter(latest);
                 if (msgAfter.Teacher.Contains("Чапанова"))
                 {
                     logger.Trace("Ruska grupa found teacher");

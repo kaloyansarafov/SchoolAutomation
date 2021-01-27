@@ -14,11 +14,14 @@ namespace GCRBot
     public partial class ClassroomBot : Bot
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private ReadOnlyDictionary<string, By> selectors;
 
-        SelectorFetcher selFetcher { get; }
+        private SelectorFetcher selFetcher { get; }
+
         public ClassroomBot(Config config) : base(config)
         {
             selFetcher = new SelectorFetcher(driver);
+            selectors = MeetSelectorFactory.Get(config.Driver.Browser);
         }
         public bool Login()
         {
@@ -48,6 +51,31 @@ namespace GCRBot
             logger.Trace("On to base login");
             // Assumes cookies exist
             return base.Login(goToConfigLink: true);
+        }
+        public string GetClassroomMeetLink()
+        {
+            IWebElement link = firstLoad.Until(driver =>
+                driver.FindElement(selectors[Elements.ClassroomMeetLink])
+            );
+            return link.Text;
+        }
+        void UpdateFeed()
+        {
+            try
+            {
+                logger.Trace("Updating feed");
+                IWebElement el = driver.FindElement(selectors[Elements.ShowMoreButton]);
+                if (el.Displayed)
+                {
+                    logger.Trace("Updated feed");
+                    el.Click();
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                // Do nothing.
+                logger.Trace("Couldn't update feed...");
+            }
         }
     }
     class LoginBot : Bot

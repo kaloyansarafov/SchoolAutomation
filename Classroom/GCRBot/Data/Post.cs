@@ -13,5 +13,27 @@ namespace GCRBot.Data
         [FromXPath("/div/h2/span")]
         public string Name { get; init; }
         public IWebElement WebElement { get; init; }
+        public override string ToString()
+        {
+            int postedWord = Teacher.IndexOf("posted");
+            string teacher = Teacher.Substring(0, postedWord);
+
+            // Take only the assignment's name
+            string name;
+            if (Name.Contains("Assignment"))
+            {
+                int firstQuote = Name.IndexOf('"') + 1;
+                int lastQuote = Name.LastIndexOf('"');
+                name = Name.Substring(startIndex: firstQuote, length: lastQuote - firstQuote);
+            }
+            else
+            {
+                int firstQuote = Name.IndexOf('\'') + 1;
+                int lastQuote = Name.LastIndexOf('\'');
+                name = Name.Substring(startIndex: firstQuote, length: lastQuote - firstQuote);
+            }
+
+            return $"[ {Teacher}, {Timestamp}: {Name} ]";
+        }
     }
 }

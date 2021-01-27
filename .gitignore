@@ -447,3 +447,4 @@ $RECYCLE.BIN/
 **/*[cC]ookies.json
 **/geckodriver*
 **/chromedriver*
+**/\.*

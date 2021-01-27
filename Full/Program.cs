@@ -53,7 +53,7 @@ namespace Full
             logconsole.Encoding = System.Text.Encoding.UTF8;
 
             // Rules for mapping loggers to targets            
-            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logconsole, "*", final: true);
+            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logconsole, "*", final: true);
 
             // Apply config           
             NLog.LogManager.Configuration = config;

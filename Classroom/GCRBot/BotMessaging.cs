@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using GCRBot.Data;
 using OpenQA.Selenium;
 
@@ -15,27 +16,11 @@ namespace GCRBot
         {
             UpdateFeed();
             IWebElement el = defaultWait.Until(driver =>
-                message.WebElement.FindElement(By.XPath(".//div[2]/div/div[3]/div/div[2]/div/div/div/div[2]"))
+                message.WebElement.FindElement(selectors[Elements.RelativeMessageInput])
             );
             el.SendKeys(text);
             logger.Trace($"Sending {text} to message");
             return el;
-        }
-        void UpdateFeed()
-        {
-            try
-            {
-                IWebElement el = driver.FindElement(By.XPath("/html/body/nav/div[3]/div[2]/div/div/div/div"));
-                if (el.Displayed)
-                {
-                    el.Click();
-                }
-            }
-            catch (NoSuchElementException)
-            {
-                // Do nothing.
-                logger.Trace("Couldn't update feed...");
-            }
         }
         /// <summary>
         /// Gets post from the top of the classroom
@@ -56,9 +41,56 @@ namespace GCRBot
             // Get first post
             return selFetcher.Get<Message>(index);
         }
-        public Message GetMessageAfter(Message message, int times)
+        public Message GetMessageAfter(Message message, int times = 1)
         {
             return selFetcher.FindAfter(message, times);
+        }
+        public bool WrittenCommentOn(Message message)
+        {
+            int amount = AmountOfComments(message);
+            if (amount == 0)
+            {
+                return false;
+            }
+            if (amount == 1)
+            {
+                IWebElement el = defaultWait.Until(driver =>
+                    message.WebElement.FindElement(selectors[Elements.RelativeMessageComments])
+                );
+            }
+            throw new NotImplementedException();
+        }
+        private bool ShowMoreComments(Message message)
+        {
+            IWebElement el = defaultWait.Until(driver =>
+                message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton])
+            );
+            if (el.Enabled)
+            {
+                int amount = GetNumbersFrom(el.Text);
+                if (amount > 1)
+                {
+                    el.Click();
+                    return true;
+                }
+            }
+            return false;
+        }
+        private int AmountOfComments(Message message)
+        {
+            IWebElement el = defaultWait.Until(driver =>
+                message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton])
+            );
+            if (el.Enabled && el.Displayed)
+            {
+                return GetNumbersFrom(el.Text);
+            }
+            return 0;
+        }
+        private int GetNumbersFrom(string text)
+        {
+            Regex regex = new Regex("[0-9]*");
+            return int.Parse(regex.Match(text).Value.Trim());
         }
     }
 }
