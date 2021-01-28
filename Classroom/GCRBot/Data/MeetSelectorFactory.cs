@@ -22,7 +22,7 @@ namespace GCRBot
             selectors.Add(Elements.RelativeMessageComments,
                 By.XPath(".//div[2]/div/div[2]"));
             selectors.Add(Elements.ClassroomMeetLink,
-                By.XPath("/html/body/div[2]/div[2]/div[1]/div/div[2]/div[2]/div/span/a"));
+                By.XPath("/html/body/div[2]/div/div[1]/div/div[2]/div[2]/div/span/a"));
             return selectors;
         }
         private static Dictionary<string, By> ForChrome()

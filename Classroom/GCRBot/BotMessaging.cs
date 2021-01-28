@@ -54,12 +54,33 @@ namespace GCRBot
             }
             if (amount == 1)
             {
-                IWebElement el = defaultWait.Until(driver =>
+                IWebElement comments = defaultWait.Until(driver =>
                     message.WebElement.FindElement(selectors[Elements.RelativeMessageComments])
                 );
+                IWebElement settings = comments.FindElement(By.XPath(".//div/div/div/div/div[1]/div[2]/div/div/div"));
+                string label = settings.GetAttribute("aria-label");
+                return IsOwnComment(label);
+            }
+            else
+            {
+                IWebElement comments = defaultWait.Until(driver =>
+                    message.WebElement.FindElement(selectors[Elements.RelativeMessageComments])
+                );
+                comments.Click();
+                for (int i = 1; i <= amount; i++)
+                {
+                    string fullSelector = $".//div[{i}]/div/div/div/div[1]/div[2]/div[1]";
+                    logger.Debug("Selector: {0}", fullSelector);
+                    IWebElement settings = comments.FindElement(By.XPath(fullSelector));
+                    string label = settings.GetAttribute("aria-label");
+                    logger.Debug("Found label: '{0}' ", label);
+                    if (IsOwnComment(label)) return true;
+                }
+                return false;
             }
             throw new NotImplementedException();
         }
+        private bool IsOwnComment(string label) => string.IsNullOrEmpty(label);
         private bool ShowMoreComments(Message message)
         {
             IWebElement el = defaultWait.Until(driver =>

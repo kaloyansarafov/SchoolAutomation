@@ -18,24 +18,27 @@ namespace Automation
             SetupLogger();
             Config config = GetConfig();
             if (config == null) return;
+            // config.Driver.Browser = "firefox";
             config.Driver.Headless = false;
             using (ClassroomBot bot = new ClassroomBot(config))
             {
                 try
                 {
                     logger.Info("Loggedin: " + bot.Login());
-                    // logger.Info(bot.GetClassroomMeetLink());
-                    // Message msg = bot.GetMessage(0);
-                    // logger.Info(msg.Teacher);
-                    // logger.Info(bot.GetMessageAfter(msg).Teacher);
+                    logger.Info(bot.GetClassroomMeetLink());
                     Post post = bot.GetPost(0);
                     logger.Info(post);
                     logger.Info(bot.GetPostAfter(post));
+                    Message msg = bot.GetMessage(0);
+                    logger.Info(msg);
+                    logger.Info("Written comment? {0}", bot.WrittenCommentOn(msg));
+                    // logger.Info(bot.GetMessageAfter(msg).Teacher);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Caught: " + ex);
                 }
+                Console.ReadLine();
             }
         }
         static void SetupLogger()
@@ -50,7 +53,7 @@ namespace Automation
             logconsole.Encoding = System.Text.Encoding.UTF8;
 
             // Rules for mapping loggers to targets            
-            config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole, "*", final: true);
+            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logconsole, "*", final: true);
 
             // Apply config           
             NLog.LogManager.Configuration = config;

@@ -92,7 +92,7 @@ namespace Full
             }
             else
             {
-                peopleNeeded = 10;
+                peopleNeeded = 11;
             }
 
             return peopleNeeded;

@@ -77,8 +77,10 @@ namespace Full
                 {
                     latest = LangGroupFilter(bot, latest);
                     logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
-                    //TODO Add check for existing comment
-                    bot.SendOnMessage(eventArgs.Data, "Добър ден.");
+
+                    if (!bot.WrittenCommentOn(latest))
+                        bot.SendOnMessage(eventArgs.Data, "Добър ден.");
+
                     OnGreetingReceived?.Invoke(bot, eventArgs);
                 }
             }

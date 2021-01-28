@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using GBot.Extensions;
 using OpenQA.Selenium;
@@ -12,6 +13,7 @@ namespace GBot
         private readonly WebDriverWait wait;
         private WebDriverWait firstWait;
         private NLog.Logger logger;
+        private HashSet<Type> TypesToTraverse;
         const int POST_DEPTH = 30;
 
         public SelectorFetcher(IWebDriver driver)
@@ -20,55 +22,102 @@ namespace GBot
             wait = new WebDriverWait(driver, new TimeSpan(0, 0, 0, 0, 500));
             firstWait = new WebDriverWait(driver, new TimeSpan(0, 0, 4));
             logger = NLog.LogManager.GetCurrentClassLogger();
+            TypesToTraverse = new();
+        }
+        public bool Register<T>()
+        {
+            return TypesToTraverse.Add(typeof(T));
         }
         /// <summary>
         /// Populates T object with the fetched FromSelectors
         /// </summary>
         /// <param name="baseSelector">Base selector of item. Used in relative searches.</param>
         /// <param name="isXpath">Are selectors xpath</param>
-        /// <typeparam name="T">Class with certain attributes</typeparam>
+        /// <typeparam name="T">Class with FromSelector attributes</typeparam>
         /// <returns>Populated T item</returns>
-        internal T Fill<T>(string baseSelector, bool isXpath) where T : new()
+        public T Fill<T>() where T : new()
         {
-            T toFill = new T();
+            var fromSel = typeof(T).GetCustomAttribute<FromSelector>();
+            return Fill<T>(fromSel.Selector);
+        }
+        internal T Fill<T>(string baseSelector) where T : new()
+        {
+            bool isXpath = IsXpath(baseSelector);
+            var selAttr = typeof(T).GetCustomAttribute<FromSelector>();
+            T fill = new T();
 
-            PropertyInfo[] props = typeof(T).GetProperties();
-            foreach (PropertyInfo prop in props)
+            Queue<(object, string)> queue = new();
+            queue.Enqueue((fill, baseSelector));
+            while (queue.Count > 0)
             {
-                FromSelector propSel = prop.GetCustomAttribute<FromSelector>();
-                if (propSel != null)
-                {
-                    string selector = propSel.Selector;
-                    if (propSel.InheritFromClass)
-                    {
-                        if (isXpath && propSel is not FromXPath)
-                        {
-                            throw new InvalidSelectorException("Class and properties have different types");
-                        }
-                        selector = baseSelector + selector;
-                    }
+                (object @class, string baseSel) = queue.Dequeue();
 
-                    IWebElement el = Fetch(selector, isXpath);
-                    if (!el.Displayed)
-                    {
-                        throw new ElementNotVisibleException();
-                    }
-                    object value = Parse(el, prop.PropertyType);
-                    prop.SetValue(toFill, value);
-                }
-                else
+                var props = @class.GetType().GetProperties();
+                foreach (PropertyInfo prop in props)
                 {
-                    if (prop.PropertyType == typeof(IWebElement))
+                    var propSel = prop.GetCustomAttribute<FromXPath>();
+                    if (propSel != null)
                     {
-                        prop.SetValue(toFill, Fetch(baseSelector, isXpath));
+                        string selector = propSel.Selector;
+                        if (propSel.InheritFromClass)
+                        {
+                            if (isXpath && propSel is not FromXPath)
+                            {
+                                throw new InvalidSelectorException("Class and properties have different types");
+                            }
+                            selector = baseSelector + selector;
+                        }
+                        if (TypesToTraverse.Contains(prop.PropertyType))
+                        {
+                            if (prop.PropertyType == @class.GetType())
+                            {
+                                logger.Debug("Recursion on {0}", @class.GetType().Name);
+                                continue;
+                            }
+                            var ctor = prop.PropertyType.GetConstructor(System.Type.EmptyTypes);
+                            if (ctor == null)
+                                throw new Exception("No parameterless constructor for " + prop.PropertyType.Name);
+                            object childClass = ctor.Invoke(null);
+                            prop.SetValue(@class, childClass);
+                            queue.Enqueue(
+                                (childClass, baseSel + selector)
+                            );
+                        }
+                        else
+                        {
+                            IWebElement el = Fetch(selector, isXpath);
+                            if (!el.Displayed)
+                            {
+                                throw new ElementNotVisibleException();
+                            }
+                            object value = Parse(el, prop.PropertyType);
+                            prop.SetValue(@class, value);
+                        }
+                    }
+                    else
+                    {
+                        if (prop.PropertyType == typeof(IWebElement))
+                        {
+                            prop.SetValue(@class, Fetch(baseSel, isXpath));
+                        }
                     }
                 }
             }
 
-            return toFill;
+            return fill;
         }
 
-        public IWebElement Fetch(string selector, bool isXpath)
+        private bool IsXpath(string baseSelector)
+        {
+            if (baseSelector.Length == 0)
+            {
+                throw new ArgumentException(nameof(baseSelector));
+            }
+            if (baseSelector.Trim()[0] == '/') return true;
+            return false;
+        }
+
+        private IWebElement Fetch(string selector, bool isXpath)
         {
             WebDriverWait waiter = firstWait ?? wait;
             logger.Trace($"Fetching {selector} for {waiter.Timeout}");
@@ -89,16 +138,12 @@ namespace GBot
             return el;
         }
 
-        object Parse(IWebElement el, Type propType)
+        private object Parse(IWebElement el, Type propType)
         {
             object value = null;
             if (propType == typeof(string))
             {
                 value = el.Text;
-            }
-            else if (propType == typeof(IWebElement))
-            {
-                value = el;
             }
 
             return value;
@@ -124,7 +169,6 @@ namespace GBot
             }
             var type = typeof(T);
             FromSelector baseClass = type.GetCustomAttribute<FromSelector>();
-            bool isXpath = baseClass is FromXPath;
             //TODO REFACTOR
             T item = default(T);
             for (int i = 1; index >= 0;)
@@ -134,7 +178,7 @@ namespace GBot
                     string selector = baseClass.Selector.Replace("{index}", i.ToString());
                     try
                     {
-                        item = Fill<T>(selector, isXpath);
+                        item = Fill<T>(selector);
                     }
                     catch //(Exception ex)
                     {
@@ -163,7 +207,7 @@ namespace GBot
                     logger.Trace("Filling selector [ {0} ]", selector);
                     try
                     {
-                        el = Fill<T>(selector, isXpath);
+                        el = Fill<T>(selector);
                     }
                     catch //(Exception ex)
                     {
