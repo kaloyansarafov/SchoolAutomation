@@ -25,11 +25,11 @@ namespace Automation
                 try
                 {
                     logger.Info("Loggedin: " + bot.Login());
-                    logger.Info(bot.GetClassroomMeetLink());
-                    Post post = bot.GetPost(0);
-                    logger.Info(post);
-                    logger.Info(bot.GetPostAfter(post));
-                    Message msg = bot.GetMessage(0);
+                    // logger.Info(bot.GetClassroomMeetLink());
+                    // Post post = bot.GetPost(0);
+                    // logger.Info(post);
+                    // logger.Info(bot.GetPostAfter(post));
+                    Message msg = bot.GetMessage(1);
                     logger.Info(msg);
                     logger.Info("Written comment? {0}", bot.WrittenCommentOn(msg));
                     // logger.Info(bot.GetMessageAfter(msg).Teacher);

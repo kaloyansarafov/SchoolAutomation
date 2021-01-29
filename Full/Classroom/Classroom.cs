@@ -46,8 +46,7 @@ namespace Full
                     break;
                 }
                 Message latest = crBot.GetMessage(0);
-                logger.Trace("Received message from {0}", latest.Teacher);
-                if ((Message)latest != last)
+                if (!latest.Equals(last))
                 {
                     logger.Debug("Received message from " + latest.Teacher);
                     OnMessageReceived?.Invoke(crBot, new DataEventArgs<Message>(latest, last));
@@ -76,10 +75,12 @@ namespace Full
                 if (!Utils.IsLangClass(latest) && !Utils.IsLangClass(previous))
                 {
                     latest = LangGroupFilter(bot, latest);
-                    logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
 
                     if (!bot.WrittenCommentOn(latest))
+                    {
+                        logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
                         bot.SendOnMessage(eventArgs.Data, "Добър ден.");
+                    }
 
                     OnGreetingReceived?.Invoke(bot, eventArgs);
                 }

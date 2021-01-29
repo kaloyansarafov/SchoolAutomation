@@ -26,41 +26,60 @@ namespace Full
         }
         public async void EnterMeet(object sender, DataEventArgs<Message> eventArgs)
         {
-            switch (meetBot.State)
+            try
             {
-                case MeetState.InCall:
-                    logger.Warn("In call");
-                    //TODO FOR NOW
-                    return;
-                case MeetState.OutsideMeet:
-                    logger.Debug("Entering meet...");
-                    break;
-                case MeetState.NotLoggedIn:
-                    Login();
-                    break;
-                default:
-                    throw new Exception("Invalid state: " + meetBot.State);
-            }
-            //GLOBAL VARIABLE
-            languageClass = Utils.IsLangClass(eventArgs.Data);
-
-            string link = Utils.GetMeetLink(eventArgs.Data.Information);
-            EnterOverview(link);
-
-            bool entered = await Task.Run(() =>
-                //infinite
-                Utils.Retry(() =>
+                switch (meetBot.State)
                 {
-                    bool entered = TryEnterMeet();
-                    if (!entered) Task.Delay(new TimeSpan(0, 0, 20)).Wait();
-                    return entered;
-                })
-            );
-            if (!entered)
-            {
-                logger.Error("Couldn't enter meet: {0}", link);
+                    case MeetState.InCall:
+                        logger.Warn("In call");
+                        //TODO Queue up
+                        return;
+                    case MeetState.OutsideMeet:
+                        logger.Debug("Entering meet...");
+                        break;
+                    case MeetState.NotLoggedIn:
+                        Login();
+                        break;
+                    default:
+                        throw new Exception("Invalid state: " + meetBot.State);
+                }
+                //GLOBAL VARIABLE
+                languageClass = Utils.IsLangClass(eventArgs.Data);
+
+                string link = Utils.GetMeetLink(eventArgs.Data.Information);
+                if (string.IsNullOrEmpty(link))
+                {
+                    if (string.IsNullOrEmpty(DefaultMeetLink))
+                    {
+                        DefaultMeetLink = (sender as ClassroomBot).GetClassroomMeetLink();
+                        logger.Trace("Setting link to {0}", DefaultMeetLink);
+                    }
+                    link = DefaultMeetLink;
+                }
+                bool meetExists = EnterOverview(link);
+                //TODO Queue Up
+                if (!meetExists) return;
+
+                bool entered = await Task.Run(() =>
+                    //infinite
+                    Utils.Retry(() =>
+                    {
+                        bool entered = TryEnterMeet();
+                        if (!entered) Task.Delay(new TimeSpan(0, 0, 45)).Wait();
+                        return entered;
+                    }, times: 4)
+                );
+                if (!entered)
+                {
+                    logger.Error("Couldn't enter meet: {0}", link);
+                    return;
+                }
+                await ExitMeet();
             }
-            await ExitMeet();
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
         private async Task ExitMeet()
         {
@@ -71,7 +90,7 @@ namespace Full
             while (true)
             {
                 int peopleInCall = meetBot.PeopleInMeet();
-                int peopleNeeded = GetPeopleNeeded();
+                // int peopleNeeded = GetPeopleNeeded();
                 if (peopleInCall < startingPeople)
                 {
                     break;
@@ -116,7 +135,7 @@ namespace Full
             return false;
         }
 
-        private void EnterOverview(string link)
+        private bool EnterOverview(string link)
         {
             if (string.IsNullOrEmpty(link))
             {
@@ -136,9 +155,11 @@ namespace Full
                 if (link.Contains("/lookup/"))
                 {
                     logger.Error(ex, "No meet in lookup link");
+                    return false;
                 }
                 else throw;
             }
+            return true;
         }
         private void Login()
         {

@@ -124,14 +124,14 @@ namespace MeetGBot
             split.Add(andSplit[0]);
             Regex reg = new Regex("[0-9]*");
             var match = reg.Match(andSplit[1].Trim());
-            if (!match.Success)
+            if (!match.Success || string.IsNullOrEmpty(match.Value))
             {
-                Console.WriteLine("Success");
                 split.Add(andSplit[1]);
                 return split.Count;
             }
             else
             {
+                logger.Trace("Got {0} more people", match.Value);
                 int val = int.Parse(match.Value);
                 return split.Count + val;
             }
