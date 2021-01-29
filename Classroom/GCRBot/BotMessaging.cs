@@ -48,6 +48,7 @@ namespace GCRBot
         public bool WrittenCommentOn(Message message)
         {
             int amount = AmountOfComments(message);
+            logger.Trace("Got amount of comments: {0}", amount);
             if (amount == 0)
             {
                 return false;
@@ -70,10 +71,9 @@ namespace GCRBot
                 for (int i = 1; i <= amount; i++)
                 {
                     string fullSelector = $".//div[{i}]/div/div/div/div[1]/div[2]/div[1]";
-                    logger.Debug("Selector: {0}", fullSelector);
                     IWebElement settings = comments.FindElement(By.XPath(fullSelector));
                     string label = settings.GetAttribute("aria-label");
-                    logger.Debug("Found label: '{0}' ", label);
+                    logger.Trace("Got label {0} from '{1}'", label, fullSelector);
                     if (IsOwnComment(label)) return true;
                 }
                 return false;
@@ -99,13 +99,30 @@ namespace GCRBot
         }
         private int AmountOfComments(Message message)
         {
-            IWebElement el = defaultWait.Until(driver =>
-                message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton])
+            IWebElement comments = defaultWait.Until(driver =>
+                driver.FindElement(selectors[Elements.RelativeMessageComments])
             );
-            if (el.Enabled && el.Displayed)
+            try
             {
-                return GetNumbersFrom(el.Text);
+                firstLoad.Until(driver =>
+                    comments.FindElement(By.XPath(".//div[last()]")).Enabled
+                );
+                IWebElement el = message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton]);
+                if (el.Enabled && el.Displayed)
+                {
+                    return GetNumbersFrom(el.Text);
+                }
             }
+            catch (Exception ex)
+            {
+                if (ex is NoSuchElementException || ex is WebDriverTimeoutException)
+                {
+                    return 0;
+                }
+                logger.Error(ex);
+                throw;
+            }
+            logger.Error("Fuck");
             return 0;
         }
         private int GetNumbersFrom(string text)

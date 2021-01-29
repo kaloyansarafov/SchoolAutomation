@@ -17,9 +17,9 @@ namespace Full
 
             Classroom classroom = new Classroom(config, source.Token);
             Meet meet = new Meet(config);
-            classroom.OnGreetingReceived += meet.EnterMeet;
             try
             {
+                classroom.OnGreetingReceived += meet.EnterMeet;
                 Task crTask = classroom.Start();
                 Console.ReadLine();
                 source.Cancel();

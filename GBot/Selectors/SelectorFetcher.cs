@@ -120,7 +120,6 @@ namespace GBot
         private IWebElement Fetch(string selector, bool isXpath)
         {
             WebDriverWait waiter = firstWait ?? wait;
-            logger.Trace($"Fetching {selector} for {waiter.Timeout}");
             IWebElement el;
             if (isXpath)
             {
@@ -204,7 +203,7 @@ namespace GBot
                 do
                 {
                     string selector = baseClass.Selector.Replace("{index}", i.ToString());
-                    logger.Trace("Filling selector [ {0} ]", selector);
+                    // logger.Trace("Filling selector [ {0} ]", selector);
                     try
                     {
                         el = Fill<T>(selector);
@@ -215,15 +214,12 @@ namespace GBot
                     }
                     i++;
                 } while (el == null && i < POST_DEPTH);
-                logger.Trace("Found element: {0}", el);
                 if (el.Equals(item))
                 {
                     found = true;
-                    logger.Trace("{0} matches {1}", el, item);
                 }
                 if (found)
                 {
-                    logger.Trace("Found, counting off: {0}", times);
                     times--;
                 }
             }
